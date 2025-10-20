@@ -1,0 +1,38 @@
+name: Deploy Web to cPanel (prueba.servicio.ugelelcollao.edu.pe)
+
+on:
+  push:
+    branches: [ "main" ]      # despliega automáticamente al hacer push/merge a main
+  workflow_dispatch:          # permite dispararlo manualmente desde Actions
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install & Build
+        run: |
+          npm ci
+          npm run build
+
+      # Subir el contenido de dist/ al Document Root del subdominio por FTP
+      - name: FTP Deploy (dist -> cPanel Document Root)
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server:   ${{ secrets.CPANEL_FTP_HOST }}
+          username: ${{ secrets.CPANEL_FTP_USER }}
+          password: ${{ secrets.CPANEL_FTP_PASS }}
+          local-dir: dist/
+          server-dir: ${{ vars.CPANEL_REMOTE_DIR }}   # <-- AQUÍ usa la variable con tu Document Root exacto
+          log-level: standard
+          exclude: |
+            **/.git*
+            **/.DS_Store
