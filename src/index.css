@@ -1,0 +1,91 @@
+/* Importar todos los estilos */
+@import './styles/globals.css';
+@import './styles/components.css';
+
+/* Estilos de reset y base adicionales */
+#root {
+  min-height: 100vh;
+}
+
+/* Utilidades de Tailwind extendidas */
+@layer utilities {
+  .bg-snow-50 {
+    background-color: var(--snow-50);
+  }
+  
+  .bg-rose-200 {
+    background-color: var(--rose-200);
+  }
+  
+  .bg-mauve-400 {
+    background-color: var(--mauve-400);
+  }
+  
+  .bg-ice-200 {
+    background-color: var(--ice-200);
+  }
+  
+  .bg-slate-600 {
+    background-color: var(--slate-600);
+  }
+  
+  .bg-fjord-700 {
+    background-color: var(--fjord-700);
+  }
+  
+  .text-snow-50 {
+    color: var(--snow-50);
+  }
+  
+  .text-rose-200 {
+    color: var(--rose-200);
+  }
+  
+  .text-mauve-400 {
+    color: var(--mauve-400);
+  }
+  
+  .text-ice-200 {
+    color: var(--ice-200);
+  }
+  
+  .text-slate-600 {
+    color: var(--slate-600);
+  }
+  
+  .text-fjord-700 {
+    color: var(--fjord-700);
+  }
+  
+  .border-ice-200 {
+    border-color: var(--ice-200);
+  }
+  
+  .border-rose-200 {
+    border-color: var(--rose-200);
+  }
+  
+  .border-fjord-700 {
+    border-color: var(--fjord-700);
+  }
+  
+  .bg-grad-brand {
+    background: var(--grad-brand);
+  }
+  
+  .bg-grad-rose {
+    background: var(--grad-rose);
+  }
+  
+  .shadow-custom-sm {
+    box-shadow: var(--shadow-sm);
+  }
+  
+  .shadow-custom-md {
+    box-shadow: var(--shadow-md);
+  }
+  
+  .shadow-custom-lg {
+    box-shadow: var(--shadow-lg);
+  }
+}

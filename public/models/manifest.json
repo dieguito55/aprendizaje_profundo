@@ -1,0 +1,5 @@
+{
+  "latest": "v1.0",
+  "available": ["v1.0"],
+  "notes": "MobileNetV2 TL, ~90% val acc. Educational, no diagnóstico."
+}
