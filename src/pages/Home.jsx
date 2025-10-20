@@ -22,7 +22,7 @@ const Home = () => {
           </div>
 
           <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold text-[#082543] mb-6 font-serif tracking-tight">
-        nuevoooooo
+        diego
             <span className="block text-2xl md:text-3xl lg:text-4xl text-[#F15F79] mt-4 font-light tracking-wider">
               Dermatología Educativa Avanzada
             </span>
