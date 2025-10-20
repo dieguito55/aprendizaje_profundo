@@ -22,7 +22,7 @@ const Prediction = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [isPredicting, setIsPredicting] = useState(false);
   const [predictionTime, setPredictionTime] = useState(null);
-  const { model, loading, error } = useModel();
+  const { model, labels, version, loading, error } = useModel();
   const canvasRef = useRef();
 
   const handlePrediction = async (imageElement) => {
@@ -34,7 +34,7 @@ const Prediction = () => {
     
     const t0 = performance.now();
     try {
-      const results = await predictComplete(model, imageElement, 3);
+      const results = await predictComplete(model, imageElement, 3, labels);
       setPredictions(results);
       setSelectedImage(imageElement);
       setPredictionTime((performance.now() - t0).toFixed(0));
@@ -70,7 +70,11 @@ const Prediction = () => {
             <div className="absolute -inset-3 bg-gradient-to-r from-[#F15F79] to-[#258CAB] rounded-2xl opacity-20 blur-lg"></div>
           </div>
         </div>
-
+        
+{/* Indicador con versión del modelo */}
+<div className="text-center text-sm text-[#082543]/60 mt-2">
+  Modelo activo: <span className="font-semibold">{version}</span>
+</div>
         <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-[#082543] mb-4 font-serif tracking-tight">
           Análisis en Tiempo Real
         </h1>

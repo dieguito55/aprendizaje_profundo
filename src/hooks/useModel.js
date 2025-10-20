@@ -1,29 +1,36 @@
 // src/hooks/useModel.js
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import * as tf from "@tensorflow/tfjs";
-import { loadModel } from "../lib/model";
+import { loadManifest, resolveVersion } from "../lib/manifest";
+import { loadModelFrom } from "../lib/model";
 
 export const useModel = () => {
-  const [model, setModel]   = useState(null);
-  const [loading, setLoad]  = useState(true);
-  const [error, setError]   = useState(null);
+  const [model, setModel] = useState(null);
+  const [labels, setLabels] = useState([]);
+  const [version, setVersion] = useState("");
+  const [loading, setLoad] = useState(true);
+  const [error, setErr] = useState(null);
 
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
         await tf.ready();
-        // webgl suele ser más rápido; silencia si falla
         try { await tf.setBackend("webgl"); } catch {}
         await tf.nextFrame();
 
-        const m = await loadModel();
+        const manifest = await loadManifest();
+        const v = resolveVersion(manifest);
+        const m = await loadModelFrom(manifest, v);
         // warmup
         m.predict(tf.zeros([1,224,224,3])).dispose();
 
-        if (mounted) setModel(m);
+        if (!mounted) return;
+        setModel(m);
+        setLabels(manifest.labels || []);
+        setVersion(v);
       } catch (e) {
-        if (mounted) setError(e.message || "Fallo cargando el modelo");
+        if (mounted) setErr(e.message || "Fallo cargando el modelo");
       } finally {
         if (mounted) setLoad(false);
       }
@@ -31,5 +38,5 @@ export const useModel = () => {
     return () => { mounted = false; };
   }, []);
 
-  return { model, loading, error };
+  return { model, labels, version, loading, error };
 };

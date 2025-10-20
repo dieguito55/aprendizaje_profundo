@@ -1,91 +1,29 @@
-/* Importar todos los estilos */
-@import './styles/globals.css';
-@import './styles/components.css';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+:root{
+  /* Brand – Alpine Dawn */
+  --snow-50:   #FAF0EA;
+  --rose-200:  #E9CECE;
+  --mauve-400: #A69AAD;
+  --ice-200:   #C3D5E4;
+  --slate-600: #7380A1;
+  --fjord-700: #2D608F;
 
-/* Estilos de reset y base adicionales */
-#root {
-  min-height: 100vh;
-}
+  /* Derivados útiles */
+  --ink-900:   #0f172a; /* texto */
+  --ink-700:   #1f2937;
+  --surface:   var(--snow-50);
+  --accent:    var(--fjord-700);
 
-/* Utilidades de Tailwind extendidas */
-@layer utilities {
-  .bg-snow-50 {
-    background-color: var(--snow-50);
-  }
-  
-  .bg-rose-200 {
-    background-color: var(--rose-200);
-  }
-  
-  .bg-mauve-400 {
-    background-color: var(--mauve-400);
-  }
-  
-  .bg-ice-200 {
-    background-color: var(--ice-200);
-  }
-  
-  .bg-slate-600 {
-    background-color: var(--slate-600);
-  }
-  
-  .bg-fjord-700 {
-    background-color: var(--fjord-700);
-  }
-  
-  .text-snow-50 {
-    color: var(--snow-50);
-  }
-  
-  .text-rose-200 {
-    color: var(--rose-200);
-  }
-  
-  .text-mauve-400 {
-    color: var(--mauve-400);
-  }
-  
-  .text-ice-200 {
-    color: var(--ice-200);
-  }
-  
-  .text-slate-600 {
-    color: var(--slate-600);
-  }
-  
-  .text-fjord-700 {
-    color: var(--fjord-700);
-  }
-  
-  .border-ice-200 {
-    border-color: var(--ice-200);
-  }
-  
-  .border-rose-200 {
-    border-color: var(--rose-200);
-  }
-  
-  .border-fjord-700 {
-    border-color: var(--fjord-700);
-  }
-  
-  .bg-grad-brand {
-    background: var(--grad-brand);
-  }
-  
-  .bg-grad-rose {
-    background: var(--grad-rose);
-  }
-  
-  .shadow-custom-sm {
-    box-shadow: var(--shadow-sm);
-  }
-  
-  .shadow-custom-md {
-    box-shadow: var(--shadow-md);
-  }
-  
-  .shadow-custom-lg {
-    box-shadow: var(--shadow-lg);
-  }
+  /* Sombras (multi-layer) */
+  --shadow-sm: 0 1px 2px rgba(17,24,39,.06);
+  --shadow-md: 0 10px 20px rgba(45,96,143,.12), 0 4px 10px rgba(17,24,39,.06);
+  --shadow-lg: 0 22px 40px rgba(45,96,143,.18), 0 10px 20px rgba(17,24,39,.08);
+
+  /* Gradientes */
+  --grad-brand: linear-gradient(135deg, var(--ice-200), var(--fjord-700));
+  --grad-rose:  linear-gradient(135deg, var(--rose-200), var(--mauve-400));
+  --glass-bg:   rgba(255,255,255,.55);
+  --glass-brd:  rgba(195,213,228,.55);
 }
