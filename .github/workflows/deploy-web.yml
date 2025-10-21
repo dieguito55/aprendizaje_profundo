@@ -1,4 +1,4 @@
-name: Deploy Web to cPanel (prueba.servicio.ugelelcollao.edu.pe)
+name: Deploy Web to cPanel (dermapp.grupoecoing.com)
 
 on:
   push:
