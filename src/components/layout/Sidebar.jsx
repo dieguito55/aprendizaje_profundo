@@ -9,14 +9,28 @@ import {
   FaClinicMedical,
   FaBrain,
   FaBookMedical,
-  FaChevronRight
+  FaChevronRight,
+  FaImages,
+  FaSyncAlt,
+  FaChartLine
 } from 'react-icons/fa';
 
 const Sidebar = ({ isOpen, onClose, onStateChange }) => {
-  const [isCollapsed, setIsCollapsed] = useState(true); // Siempre colapsado por defecto
+  const [isCollapsed, setIsCollapsed] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
   const [mouseInSidebar, setMouseInSidebar] = useState(false);
+  const [activeItem, setActiveItem] = useState('');
   const location = useLocation();
+
+  // Paleta de colores profesional
+  const colors = {
+    primary: '#342B7C',
+    secondary: '#8C7FE9',
+    accent: '#C19CFF',
+    background: '#FDEEFD',
+    lightBg: '#D8DFF9',
+    text: '#1A1A2E'
+  };
 
   // Notificar al layout sobre cambios de estado
   useEffect(() => {
@@ -25,12 +39,10 @@ const Sidebar = ({ isOpen, onClose, onStateChange }) => {
     }
   }, [isCollapsed, isHovered, onStateChange]);
 
-  const handleLinkClick = () => {
+  const handleLinkClick = (itemName) => {
+    setActiveItem(itemName);
     if (window.innerWidth < 1024) {
       onClose();
-    }
-    // En móvil, colapsar automáticamente después del clic
-    if (window.innerWidth < 1024) {
       setIsCollapsed(true);
       setIsHovered(false);
     }
@@ -39,25 +51,37 @@ const Sidebar = ({ isOpen, onClose, onStateChange }) => {
   const menuItems = [
     { 
       name: 'Inicio', 
-      icon: <FaHome className="w-5 h-5" />, 
+      icon: <FaHome className="w-4 h-4 transition-transform duration-300 group-hover:scale-110" />, 
       path: '/',
       description: 'Página principal'
     },
     { 
       name: 'Enfermedades', 
-      icon: <FaDisease className="w-5 h-5" />, 
+      icon: <FaDisease className="w-4 h-4 transition-transform duration-300 group-hover:scale-110" />, 
       path: '/enfermedades',
       description: 'Catálogo completo'
     },
     { 
       name: 'Predicción en Vivo', 
-      icon: <FaCamera className="w-5 h-5" />, 
+      icon: <FaCamera className="w-4 h-4 transition-transform duration-300 group-hover:scale-110" />, 
       path: '/prediccion',
       description: 'Análisis IA'
     },
     { 
+      name: 'Analizar Imágenes', 
+      icon: <FaImages className="w-4 h-4 transition-transform duration-300 group-hover:scale-110" />, 
+      path: '/analizar',
+      description: 'Procesar imágenes'
+    },
+    { 
+      name: 'Reentrenar IA', 
+      icon: <FaSyncAlt className="w-4 h-4 transition-transform duration-300 group-hover:scale-110" />, 
+      path: '/reentrenar',
+      description: 'Optimizar modelo'
+    },
+    { 
       name: 'Acerca de', 
-      icon: <FaInfoCircle className="w-5 h-5" />, 
+      icon: <FaInfoCircle className="w-4 h-4 transition-transform duration-300 group-hover:scale-110" />, 
       path: '/nosotros',
       description: 'Sobre nosotros'
     },
@@ -68,7 +92,7 @@ const Sidebar = ({ isOpen, onClose, onStateChange }) => {
     if (!mouseInSidebar && isHovered) {
       const timer = setTimeout(() => {
         setIsHovered(false);
-      }, 300); // Pequeño delay para evitar flickering
+      }, 200);
       return () => clearTimeout(timer);
     }
   }, [mouseInSidebar, isHovered]);
@@ -77,11 +101,9 @@ const Sidebar = ({ isOpen, onClose, onStateChange }) => {
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth < 1024) {
-        // En móvil, siempre expandido cuando está abierto
         setIsCollapsed(!isOpen);
         setIsHovered(false);
       } else {
-        // En desktop, siempre colapsado por defecto
         setIsCollapsed(true);
         setIsHovered(false);
       }
@@ -92,7 +114,7 @@ const Sidebar = ({ isOpen, onClose, onStateChange }) => {
     return () => window.removeEventListener('resize', handleResize);
   }, [isOpen]);
 
-  const sidebarWidth = isCollapsed && !isHovered ? 'w-20' : 'w-80';
+  const sidebarWidth = isCollapsed && !isHovered ? 'w-16' : 'w-64';
   const isExpanded = !isCollapsed || isHovered;
 
   const handleMouseEnter = () => {
@@ -104,162 +126,176 @@ const Sidebar = ({ isOpen, onClose, onStateChange }) => {
 
   const handleMouseLeave = () => {
     setMouseInSidebar(false);
-    if (window.innerWidth >= 1024) {
-      // Colapsar automáticamente después de un pequeño delay
-      setTimeout(() => {
-        if (!mouseInSidebar) {
-          setIsHovered(false);
-        }
-      }, 150);
-    }
+  };
+
+  // Animación para el icono activo
+  const getIconAnimation = (itemName) => {
+    return activeItem === itemName ? 'animate-pulse-scale' : '';
   };
 
   return (
     <>
-      {/* Overlay Mejorado */}
+      {/* Overlay Profesional */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-[#082543] bg-opacity-80 backdrop-blur-sm z-40 lg:hidden animate-fadeIn"
+          className="fixed inset-0 bg-gray-900 bg-opacity-60 backdrop-blur-md z-40 lg:hidden animate-fadeIn"
           onClick={onClose}
         />
       )}
       
-      {/* Sidebar Colapsable */}
+      {/* Sidebar Corporativo Mejorado */}
       <aside 
         className={`
-          fixed top-0 left-0 h-full bg-gradient-to-b from-[#082543] to-[#4C2D4D] shadow-2xl z-50 
-          transform transition-all duration-300 ease-in-out
+          fixed top-0 left-0 h-full bg-gradient-to-br from-[#FDEEFD] to-[#D8DFF9] shadow-2xl z-50 
+          transform transition-all duration-500 ease-in-out
+          border-r border-[#8C7FE9]/20
           ${isOpen ? 'translate-x-0' : '-translate-x-full'} 
           lg:translate-x-0 
           ${sidebarWidth}
+          overflow-hidden
         `}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
         
-        {/* Header del Sidebar */}
-        <div className="p-4 border-b border-white/10">
+        {/* Header Corporativo Compacto */}
+        <div className="p-3 border-b border-[#8C7FE9]/20 bg-white/50 backdrop-blur-sm">
           <div className="flex items-center justify-between">
             <Link 
               to="/" 
-              onClick={handleLinkClick} 
+              onClick={() => handleLinkClick('Inicio')}
               className={`flex items-center transition-all duration-300 ${
-                isExpanded ? 'space-x-3' : 'justify-center'
+                isExpanded ? 'space-x-2' : 'justify-center'
               }`}
             >
-              <div className="relative">
-                <div className="w-12 h-12 bg-gradient-to-br from-[#F15F79] to-[#4C2D4D] rounded-xl flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-                  <FaClinicMedical className="text-white text-lg" />
+              <div className="relative group">
+                <div className="w-10 h-10 bg-gradient-to-br from-[#342B7C] to-[#8C7FE9] rounded-lg flex items-center justify-center shadow-lg transition-all duration-300 group-hover:shadow-xl group-hover:scale-105">
+                  <FaClinicMedical className="text-white text-sm transition-transform duration-300 group-hover:scale-110" />
                 </div>
-                {isExpanded && (
-                  <div className="absolute -inset-1 bg-gradient-to-r from-[#F15F79] to-[#258CAB] rounded-xl opacity-20 blur-sm"></div>
-                )}
+                <div className="absolute -inset-1 bg-gradient-to-r from-[#342B7C] to-[#C19CFF] rounded-lg opacity-0 group-hover:opacity-20 blur-sm transition-opacity duration-300"></div>
               </div>
               
               {isExpanded && (
                 <div className="flex-1 min-w-0">
-                  <h2 className="text-lg font-bold text-white font-serif tracking-tight truncate">DermApp</h2>
-                  <p className="text-xs text-white/70 font-light truncate">Diagnóstico Inteligente</p>
+                  <h2 className="text-base font-bold text-[#342B7C] font-sans tracking-tight truncate">DermApp</h2>
+                  <p className="text-xs text-[#8C7FE9] font-medium truncate">Diagnóstico IA</p>
                 </div>
               )}
             </Link>
             
-            {/* Solo botón cerrar para móvil */}
+            {/* Botón cerrar solo para móvil */}
             <button 
               onClick={onClose}
-              className="lg:hidden p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-all duration-300 hover:scale-110"
+              className="lg:hidden p-1.5 rounded-lg bg-[#8C7FE9]/10 hover:bg-[#8C7FE9]/20 text-[#342B7C] transition-all duration-300 hover:scale-110"
             >
               <FaTimes className="w-3 h-3" />
             </button>
           </div>
         </div>
 
-        {/* Navegación Mejorada */}
-        <nav className="p-4 space-y-2 flex-1">
+        {/* Navegación Corporativa Compacta */}
+        <nav className="p-3 space-y-1 flex-1 overflow-y-auto">
           {menuItems.map((item, index) => (
             <Link
               key={item.name}
               to={item.path}
-              onClick={handleLinkClick}
+              onClick={() => handleLinkClick(item.name)}
               className={`
-                flex items-center transition-all duration-300 group
-                ${isExpanded ? 'p-3 rounded-xl space-x-3' : 'p-2 rounded-lg justify-center'}
+                flex items-center transition-all duration-300 group relative
+                ${isExpanded ? 'p-2 rounded-lg space-x-2' : 'p-1.5 rounded-md justify-center'}
                 ${location.pathname === item.path 
-                  ? 'bg-white/20 text-white shadow-lg' 
-                  : 'text-white/90 hover:text-white hover:bg-white/10'
+                  ? 'bg-[#8C7FE9] text-white shadow-md' 
+                  : 'text-[#342B7C] hover:bg-[#8C7FE9]/10 hover:text-[#342B7C]'
                 }
-                border border-transparent hover:border-white/10
+                border border-transparent hover:border-[#8C7FE9]/30
+                transform hover:translate-x-1
               `}
               title={isExpanded ? '' : item.name}
             >
+              {/* Indicador de estado activo */}
+              {location.pathname === item.path && (
+                <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-6 bg-[#C19CFF] rounded-r-full"></div>
+              )}
+              
               <div className={`
-                transition-all duration-300 flex items-center justify-center
+                transition-all duration-300 flex items-center justify-center relative
                 ${location.pathname === item.path 
-                  ? 'bg-gradient-to-r from-[#F15F79] to-[#258CAB]' 
-                  : 'bg-white/10 group-hover:bg-gradient-to-r group-hover:from-[#F15F79] group-hover:to-[#258CAB]'
+                  ? 'bg-white/20' 
+                  : 'bg-[#8C7FE9]/10 group-hover:bg-[#8C7FE9]/20'
                 }
-                ${isExpanded ? 'p-2 rounded-lg w-10 h-10' : 'p-1 rounded-md w-8 h-8'}
-                group-hover:scale-110
+                ${isExpanded ? 'p-1.5 rounded-md w-8 h-8' : 'p-1 rounded w-7 h-7'}
+                ${getIconAnimation(item.name)}
+                group-hover:scale-105
               `}>
                 {item.icon}
+                
+                {/* Efecto de brillo sutil */}
+                <div className="absolute inset-0 rounded-md bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </div>
               
               {isExpanded && (
-                <div className="flex-1 min-w-0">
-                  <span className="font-semibold block text-sm group-hover:translate-x-1 transition-transform duration-300">
+                <div className="flex-1 min-w-0 transition-all duration-300">
+                  <span className="font-semibold block text-sm transition-transform duration-300 group-hover:translate-x-0.5">
                     {item.name}
                   </span>
-                  <span className="text-xs text-white/60 group-hover:text-white/80 transition-colors duration-300 block truncate">
+                  <span className="text-xs text-[#8C7FE9] group-hover:text-[#342B7C] transition-colors duration-300 block truncate">
                     {item.description}
                   </span>
                 </div>
               )}
 
+              {/* Indicador de hover expandido */}
               {isExpanded && (
-                <div className="opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 transition-all duration-300">
-                  <div className="w-1.5 h-1.5 bg-[#F15F79] rounded-full"></div>
+                <div className="opacity-0 group-hover:opacity-100 transform -translate-x-1 group-hover:translate-x-0 transition-all duration-300">
+                  <FaChevronRight className="w-2 h-2 text-[#C19CFF]" />
                 </div>
               )}
             </Link>
           ))}
         </nav>
 
-        {/* Sección Informativa - Solo muestra cuando está expandido */}
+        {/* Sección de Estado del Sistema - Solo expandido */}
         {isExpanded && (
-          <div className="p-4 border-t border-white/10">
-            <div className="bg-white/5 rounded-xl p-3 backdrop-blur-sm border border-white/10">
-              <div className="flex items-center space-x-2 mb-2">
-                <div className="p-1.5 bg-gradient-to-r from-[#258CAB] to-[#4C2D4D] rounded-lg">
-                  <FaBrain className="text-white text-sm" />
+          <div className="p-3 border-t border-[#8C7FE9]/20 bg-white/30 backdrop-blur-sm">
+            <div className="bg-white/50 rounded-lg p-2 border border-[#8C7FE9]/10">
+              <div className="flex items-center space-x-2 mb-1.5">
+                <div className="p-1 bg-gradient-to-r from-[#342B7C] to-[#8C7FE9] rounded-md">
+                  <FaBrain className="text-white text-xs" />
                 </div>
-                <div>
-                  <h3 className="text-white font-semibold text-xs">IA Especializada</h3>
-                  <p className="text-white/60 text-xs">Tecnología avanzada</p>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-[#342B7C] font-semibold text-xs">IA Activa</h3>
+                  <p className="text-[#8C7FE9] text-xs truncate">Sistema operativo</p>
+                </div>
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-[#342B7C] font-medium">Rendimiento</span>
+                <div className="flex items-center space-x-1">
+                  <FaChartLine className="text-[#8C7FE9] w-2 h-2" />
+                  <span className="text-[#342B7C] font-bold">98%</span>
                 </div>
               </div>
-              <p className="text-white/70 text-xs leading-relaxed">
-                Sistema educativo con IA para diagnóstico dermatológico.
-              </p>
             </div>
           </div>
         )}
 
-        {/* Footer Sidebar - Solo muestra cuando está expandido */}
+        {/* Footer Compacto - Solo expandido */}
         {isExpanded && (
-          <div className="p-4 border-t border-white/10 bg-white/5 backdrop-blur-sm">
+          <div className="p-3 border-t border-[#8C7FE9]/20 bg-white/40 backdrop-blur-sm">
             <div className="text-center">
-              <div className="flex items-center justify-center space-x-2 mb-1">
-                <FaBookMedical className="text-[#F15F79] text-xs" />
-                <p className="text-white font-semibold text-xs">DermApp v2.0</p>
+              <div className="flex items-center justify-center space-x-1.5 mb-1">
+                <FaBookMedical className="text-[#342B7C] text-xs" />
+                <p className="text-[#342B7C] font-bold text-xs">DermApp Pro</p>
               </div>
-              <p className="text-white/50 text-xs font-light tracking-wide">
-                Sistema Educativo Inteligente
+              <p className="text-[#8C7FE9] text-xs font-medium tracking-tight">
+                v2.1 Corporativo
               </p>
-              <div className="flex justify-center space-x-1 mt-2">
+              {/* Indicadores de estado */}
+              <div className="flex justify-center space-x-1 mt-1.5">
                 {[1, 2, 3].map((dot) => (
                   <div 
                     key={dot}
-                    className="w-1 h-1 bg-white/30 rounded-full"
+                    className="w-1 h-1 bg-[#8C7FE9] rounded-full opacity-40"
                   ></div>
                 ))}
               </div>
@@ -267,15 +303,35 @@ const Sidebar = ({ isOpen, onClose, onStateChange }) => {
           </div>
         )}
 
-        {/* Indicador de Colapso - Solo muestra cuando está colapsado y no hay hover */}
+        {/* Indicador de Colapso Elegante */}
         {isCollapsed && !isHovered && (
-          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
-            <div className="w-6 h-6 bg-white/10 rounded-full flex items-center justify-center">
-              <FaChevronRight className="text-white/60 w-2 h-2" />
+          <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2">
+            <div className="w-5 h-5 bg-[#8C7FE9]/20 rounded-full flex items-center justify-center group hover:bg-[#8C7FE9]/30 transition-colors duration-300">
+              <FaChevronRight className="text-[#342B7C] w-2 h-2 transition-transform duration-300 group-hover:scale-110" />
             </div>
           </div>
         )}
       </aside>
+
+      {/* Estilos de animación personalizados */}
+      <style jsx>{`
+        @keyframes pulse-scale {
+          0% { transform: scale(1); }
+          50% { transform: scale(1.1); }
+          100% { transform: scale(1); }
+        }
+        .animate-pulse-scale {
+          animation: pulse-scale 2s ease-in-out infinite;
+        }
+        
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.3s ease-out;
+        }
+      `}</style>
     </>
   );
 };

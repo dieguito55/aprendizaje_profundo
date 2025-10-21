@@ -73,14 +73,14 @@ const WebcamCapture = ({ onCapture, disabled = false }) => {
       {/* Header Mejorado */}
       <div className="flex justify-between items-center">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-gradient-to-r from-[#F15F79] to-[#4C2D4D] rounded-xl flex items-center justify-center">
+          <div className="w-10 h-10 bg-gradient-to-r from-[#8C7FE9] to-[#342B7C] rounded-xl flex items-center justify-center">
             <FaVideo className="text-white w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-[#082543] font-serif">
+            <h3 className="text-lg font-semibold text-[#342B7C] font-serif">
               Captura en Tiempo Real
             </h3>
-            <p className="text-[#082543]/60 text-sm">
+            <p className="text-[#342B7C]/60 text-sm">
               {facingMode === 'user' ? 'Cámara frontal' : 'Cámara trasera'}
             </p>
           </div>
@@ -92,8 +92,8 @@ const WebcamCapture = ({ onCapture, disabled = false }) => {
           className={`
             flex items-center space-x-2 px-4 py-2 rounded-xl font-medium transition-all duration-300
             ${disabled 
-              ? 'bg-[#082543]/20 text-[#082543]/40 cursor-not-allowed' 
-              : 'bg-gradient-to-r from-[#258CAB] to-[#082543] text-white hover:shadow-lg transform hover:scale-105'
+              ? 'bg-[#342B7C]/20 text-[#342B7C]/40 cursor-not-allowed' 
+              : 'bg-gradient-to-r from-[#8C7FE9] to-[#342B7C] text-white hover:shadow-lg transform hover:scale-105'
             }
           `}
         >
@@ -106,17 +106,17 @@ const WebcamCapture = ({ onCapture, disabled = false }) => {
 
       {/* Webcam o Preview */}
       {!lastCapture ? (
-        <div className="relative bg-gradient-to-br from-[#082543]/5 to-[#258CAB]/5 rounded-2xl p-2 border border-[#082543]/10">
+        <div className="relative bg-gradient-to-br from-[#FDEEFD] to-[#D8DFF9] rounded-2xl p-2 border border-[#8C7FE9]/20">
           {isLoading && (
             <div className="absolute inset-0 flex items-center justify-center z-10 bg-white/80 backdrop-blur-sm rounded-xl">
               <div className="text-center">
                 <div className="relative mb-3">
-                  <div className="w-12 h-12 bg-gradient-to-r from-[#F15F79] to-[#258CAB] rounded-2xl animate-spin">
+                  <div className="w-12 h-12 bg-gradient-to-r from-[#8C7FE9] to-[#342B7C] rounded-2xl animate-spin">
                     <div className="absolute inset-2 bg-white rounded-lg"></div>
                   </div>
-                  <FaCamera className="w-5 h-5 text-[#082543] absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+                  <FaCamera className="w-5 h-5 text-[#342B7C] absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
                 </div>
-                <p className="text-[#082543] font-medium">Inicializando cámara...</p>
+                <p className="text-[#342B7C] font-medium">Inicializando cámara...</p>
               </div>
             </div>
           )}
@@ -154,7 +154,7 @@ const WebcamCapture = ({ onCapture, disabled = false }) => {
           </div>
         </div>
       ) : (
-        <div className="relative bg-gradient-to-br from-[#082543]/5 to-[#258CAB]/5 rounded-2xl p-2 border border-[#082543]/10">
+        <div className="relative bg-gradient-to-br from-[#FDEEFD] to-[#D8DFF9] rounded-2xl p-2 border border-[#8C7FE9]/20">
           <div className="relative rounded-xl overflow-hidden">
             <img
               src={lastCapture}
@@ -163,7 +163,7 @@ const WebcamCapture = ({ onCapture, disabled = false }) => {
             />
             
             {/* Badge de Estado Mejorado */}
-            <div className="absolute top-3 right-3 bg-gradient-to-r from-[#258CAB] to-[#082543] text-white text-xs px-3 py-1.5 rounded-full font-semibold shadow-lg backdrop-blur-sm">
+            <div className="absolute top-3 right-3 bg-gradient-to-r from-[#8C7FE9] to-[#342B7C] text-white text-xs px-3 py-1.5 rounded-full font-semibold shadow-lg backdrop-blur-sm">
               <div className="flex items-center space-x-1">
                 <FaCheck className="w-3 h-3" />
                 <span>Captura exitosa</span>
@@ -188,13 +188,13 @@ const WebcamCapture = ({ onCapture, disabled = false }) => {
             className={`
               relative p-5 rounded-2xl shadow-2xl transition-all duration-300 transform
               ${disabled || isLoading
-                ? 'bg-[#082543]/20 cursor-not-allowed scale-95' 
-                : 'bg-gradient-to-r from-[#F15F79] to-[#4C2D4D] hover:shadow-3xl hover:scale-110 active:scale-105'
+                ? 'bg-[#342B7C]/20 cursor-not-allowed scale-95' 
+                : 'bg-gradient-to-r from-[#C19CFF] to-[#8C7FE9] hover:shadow-3xl hover:scale-110 active:scale-105'
               }
             `}
           >
             <div className="relative">
-              <FaCircle className={`w-8 h-8 ${disabled || isLoading ? 'text-[#082543]/40' : 'text-white'}`} />
+              <FaCircle className={`w-8 h-8 ${disabled || isLoading ? 'text-[#342B7C]/40' : 'text-white'}`} />
               {isCapturing && (
                 <div className="absolute inset-0 bg-white rounded-full animate-ping"></div>
               )}
@@ -211,8 +211,8 @@ const WebcamCapture = ({ onCapture, disabled = false }) => {
               className={`
                 flex-1 flex items-center justify-center space-x-2 py-4 px-6 rounded-xl font-semibold transition-all duration-300
                 ${disabled 
-                  ? 'bg-[#082543]/20 text-[#082543]/40 cursor-not-allowed' 
-                  : 'bg-white text-[#082543] border border-[#082543]/20 hover:bg-[#082543] hover:text-white hover:shadow-lg transform hover:scale-105'
+                  ? 'bg-[#342B7C]/20 text-[#342B7C]/40 cursor-not-allowed' 
+                  : 'bg-white text-[#342B7C] border border-[#342B7C]/20 hover:bg-[#342B7C] hover:text-white hover:shadow-lg transform hover:scale-105'
                 }
               `}
             >
@@ -229,8 +229,8 @@ const WebcamCapture = ({ onCapture, disabled = false }) => {
               className={`
                 flex-1 flex items-center justify-center space-x-2 py-4 px-6 rounded-xl font-semibold transition-all duration-300
                 ${disabled 
-                  ? 'bg-[#082543]/20 text-[#082543]/40 cursor-not-allowed' 
-                  : 'bg-gradient-to-r from-[#258CAB] to-[#082543] text-white hover:shadow-lg transform hover:scale-105'
+                  ? 'bg-[#342B7C]/20 text-[#342B7C]/40 cursor-not-allowed' 
+                  : 'bg-gradient-to-r from-[#8C7FE9] to-[#342B7C] text-white hover:shadow-lg transform hover:scale-105'
                 }
               `}
             >
@@ -242,44 +242,44 @@ const WebcamCapture = ({ onCapture, disabled = false }) => {
       </div>
 
       {/* Panel de Instrucciones Mejorado */}
-      <div className="bg-gradient-to-br from-[#258CAB]/10 to-[#082543]/5 rounded-2xl p-5 border border-[#258CAB]/20 backdrop-blur-sm">
+      <div className="bg-gradient-to-br from-[#FDEEFD] to-[#D8DFF9] rounded-2xl p-5 border border-[#8C7FE9]/20 backdrop-blur-sm">
         <div className="flex items-center space-x-3 mb-3">
-          <div className="w-10 h-10 bg-gradient-to-r from-[#258CAB] to-[#082543] rounded-xl flex items-center justify-center">
+          <div className="w-10 h-10 bg-gradient-to-r from-[#8C7FE9] to-[#342B7C] rounded-xl flex items-center justify-center">
             <FaLightbulb className="text-white w-4 h-4" />
           </div>
-          <h4 className="text-sm font-semibold text-[#082543]">
+          <h4 className="text-sm font-semibold text-[#342B7C]">
             📸 Consejos para Captura Óptima
           </h4>
         </div>
         
         <div className="grid md:grid-cols-2 gap-3 text-sm">
           <div className="flex items-start space-x-2">
-            <div className="w-1.5 h-1.5 bg-[#F15F79] rounded-full mt-1.5 flex-shrink-0"></div>
-            <span className="text-[#082543]/80">Mantenga la cámara estable y enfocada</span>
+            <div className="w-1.5 h-1.5 bg-[#C19CFF] rounded-full mt-1.5 flex-shrink-0"></div>
+            <span className="text-[#342B7C]/80">Mantenga la cámara estable y enfocada</span>
           </div>
           <div className="flex items-start space-x-2">
-            <div className="w-1.5 h-1.5 bg-[#F15F79] rounded-full mt-1.5 flex-shrink-0"></div>
-            <span className="text-[#082543]/80">Use buena iluminación natural</span>
+            <div className="w-1.5 h-1.5 bg-[#C19CFF] rounded-full mt-1.5 flex-shrink-0"></div>
+            <span className="text-[#342B7C]/80">Use buena iluminación natural</span>
           </div>
           <div className="flex items-start space-x-2">
-            <div className="w-1.5 h-1.5 bg-[#F15F79] rounded-full mt-1.5 flex-shrink-0"></div>
-            <span className="text-[#082543]/80">Acérquese para ver detalles claros</span>
+            <div className="w-1.5 h-1.5 bg-[#C19CFF] rounded-full mt-1.5 flex-shrink-0"></div>
+            <span className="text-[#342B7C]/80">Acérquese para ver detalles claros</span>
           </div>
           <div className="flex items-start space-x-2">
-            <div className="w-1.5 h-1.5 bg-[#F15F79] rounded-full mt-1.5 flex-shrink-0"></div>
-            <span className="text-[#082543]/80">Evite sombras sobre el área</span>
+            <div className="w-1.5 h-1.5 bg-[#C19CFF] rounded-full mt-1.5 flex-shrink-0"></div>
+            <span className="text-[#342B7C]/80">Evite sombras sobre el área</span>
           </div>
         </div>
       </div>
 
       {/* Advertencia de Permisos */}
       {!isLoading && !webcamRef.current?.stream && (
-        <div className="bg-gradient-to-r from-[#F15F79]/10 to-[#4C2D4D]/10 border border-[#F15F79]/30 rounded-xl p-4">
+        <div className="bg-gradient-to-r from-[#FDEEFD] to-[#D8DFF9] border border-[#C19CFF]/30 rounded-xl p-4">
           <div className="flex items-center space-x-3">
-            <FaExclamationTriangle className="w-5 h-5 text-[#F15F79] flex-shrink-0" />
+            <FaExclamationTriangle className="w-5 h-5 text-[#8C7FE9] flex-shrink-0" />
             <div>
-              <p className="text-[#082543] font-medium text-sm">Permisos de cámara requeridos</p>
-              <p className="text-[#082543]/70 text-xs mt-1">
+              <p className="text-[#342B7C] font-medium text-sm">Permisos de cámara requeridos</p>
+              <p className="text-[#342B7C]/70 text-xs mt-1">
                 Por favor, permita el acceso a la cámara para usar esta función
               </p>
             </div>
