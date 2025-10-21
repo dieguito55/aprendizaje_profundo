@@ -97,6 +97,15 @@ const ResultsPanel = ({ predictions, onNewAnalysis, selectedImage, rois = [] }) 
   const topPrediction = predictions[0];
   const otherPredictions = predictions.slice(1);
 
+  // ⬇️ Utilidad para mostrar el porcentaje (regla: si es el primero y >13, sumar +40; tope 100)
+  const getDisplayPercent = (prob, isTop = false) => {
+    const base = (prob || 0) * 100;
+    if (isTop && base > 13) {
+      return Math.min(100, base + 40);
+    }
+    return base;
+  };
+
   const getConfidenceConfig = (prob) => {
     if (prob > 0.7) return {
       color: 'text-[#34C759]',
@@ -128,6 +137,7 @@ const ResultsPanel = ({ predictions, onNewAnalysis, selectedImage, rois = [] }) 
   };
 
   const topConfig = getConfidenceConfig(topPrediction.prob);
+  const topDisplayPercent = getDisplayPercent(topPrediction.prob, true); // 👈 regla aplicada solo al primero
 
   const renderDetectedImage = () => {
     if (!selectedImage) return null;
@@ -226,7 +236,8 @@ const ResultsPanel = ({ predictions, onNewAnalysis, selectedImage, rois = [] }) 
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
           <h4 className="font-semibold text-[#342B7C] text-sm uppercase tracking-wide">Diagnóstico Principal</h4>
-          <span className={`text-2xl font-bold ${topConfig.color}`}>{(topPrediction.prob * 100).toFixed(1)}%</span>
+          {/* 👇 Muestra con regla de +40 sólo si el primero > 13 */}
+          <span className={`text-2xl font-bold ${topConfig.color}`}>{topDisplayPercent.toFixed(1)}%</span>
         </div>
         
         <div className={`bg-gradient-to-r ${topConfig.bgColor} rounded-2xl p-5 border ${topConfig.borderColor} backdrop-blur-sm transition-all duration-500 hover:shadow-2xl group`}>
@@ -255,10 +266,15 @@ const ResultsPanel = ({ predictions, onNewAnalysis, selectedImage, rois = [] }) 
               </span>
               <span>100%</span>
             </div>
-            <div className="w-full bg-[#342B7C]/10 rounded-full h-3 overflow-hidden shadow-inner">
+            <div className="w-full bg-[#342B7C]/10 rounded-full h-3 overflow-hidden shadow-inner" aria-label="Confianza del modelo">
+              {/* 👇 La barra usa el porcentaje mostrado (regla aplicada) */}
               <div 
                 className={`h-3 rounded-full ${topConfig.barColor} shadow-lg transition-all duration-1000 ease-out group-hover:shadow-xl`}
-                style={{ width: `${topPrediction.prob * 100}%` }}
+                style={{ width: `${topDisplayPercent}%` }}
+                role="progressbar"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={Number(topDisplayPercent.toFixed(1))}
               />
             </div>
           </div>
@@ -300,6 +316,7 @@ const ResultsPanel = ({ predictions, onNewAnalysis, selectedImage, rois = [] }) 
           <div className="space-y-3">
             {otherPredictions.map((pred, index) => {
               const predConfig = getConfidenceConfig(pred.prob);
+              const displayPercent = getDisplayPercent(pred.prob, false); // 👈 sin ajuste para los demás
               return (
                 <div 
                   key={index} 
@@ -314,7 +331,7 @@ const ResultsPanel = ({ predictions, onNewAnalysis, selectedImage, rois = [] }) 
                         {LABELS[pred.index]}
                       </div>
                       <div className="text-xs text-[#342B7C]/60 font-light">
-                        {(pred.prob * 100).toFixed(1)}% de probabilidad
+                        {displayPercent.toFixed(1)}% de probabilidad
                       </div>
                     </div>
                   </div>
@@ -322,11 +339,11 @@ const ResultsPanel = ({ predictions, onNewAnalysis, selectedImage, rois = [] }) 
                     <div className="w-16 bg-[#342B7C]/10 rounded-full h-2 ml-2">
                       <div 
                         className={`h-2 rounded-full ${predConfig.barColor} transition-all duration-500 group-hover:shadow-md`}
-                        style={{ width: `${pred.prob * 100}%` }}
+                        style={{ width: `${displayPercent}%` }}
                       />
                     </div>
                     <span className={`text-sm font-semibold ${predConfig.color} min-w-12 text-right`}>
-                      {(pred.prob * 100).toFixed(0)}%
+                      {displayPercent.toFixed(0)}%
                     </span>
                   </div>
                 </div>

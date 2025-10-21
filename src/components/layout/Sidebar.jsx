@@ -22,7 +22,7 @@ const Sidebar = ({ isOpen, onClose, onStateChange }) => {
   const [activeItem, setActiveItem] = useState('');
   const location = useLocation();
 
-  // Paleta de colores profesional
+  // Paleta de colores profesional (por si la reutilizas)
   const colors = {
     primary: '#342B7C',
     secondary: '#8C7FE9',
@@ -34,9 +34,7 @@ const Sidebar = ({ isOpen, onClose, onStateChange }) => {
 
   // Notificar al layout sobre cambios de estado
   useEffect(() => {
-    if (onStateChange) {
-      onStateChange(isCollapsed, isHovered);
-    }
+    if (onStateChange) onStateChange(isCollapsed, isHovered);
   }, [isCollapsed, isHovered, onStateChange]);
 
   const handleLinkClick = (itemName) => {
@@ -87,17 +85,15 @@ const Sidebar = ({ isOpen, onClose, onStateChange }) => {
     },
   ];
 
-  // Efecto para manejar el colapso automático cuando el mouse sale
+  // Colapso al salir el mouse
   useEffect(() => {
     if (!mouseInSidebar && isHovered) {
-      const timer = setTimeout(() => {
-        setIsHovered(false);
-      }, 200);
+      const timer = setTimeout(() => setIsHovered(false), 200);
       return () => clearTimeout(timer);
     }
   }, [mouseInSidebar, isHovered]);
 
-  // Efecto para manejar el comportamiento en diferentes dispositivos
+  // Responsivo
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth < 1024) {
@@ -108,7 +104,6 @@ const Sidebar = ({ isOpen, onClose, onStateChange }) => {
         setIsHovered(false);
       }
     };
-
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -119,19 +114,12 @@ const Sidebar = ({ isOpen, onClose, onStateChange }) => {
 
   const handleMouseEnter = () => {
     setMouseInSidebar(true);
-    if (window.innerWidth >= 1024 && isCollapsed) {
-      setIsHovered(true);
-    }
+    if (window.innerWidth >= 1024 && isCollapsed) setIsHovered(true);
   };
+  const handleMouseLeave = () => setMouseInSidebar(false);
 
-  const handleMouseLeave = () => {
-    setMouseInSidebar(false);
-  };
-
-  // Animación para el icono activo
-  const getIconAnimation = (itemName) => {
-    return activeItem === itemName ? 'animate-pulse-scale' : '';
-  };
+  const getIconAnimation = (itemName) =>
+    activeItem === itemName ? 'animate-pulse-scale' : '';
 
   return (
     <>
@@ -157,7 +145,6 @@ const Sidebar = ({ isOpen, onClose, onStateChange }) => {
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
-        
         {/* Header Corporativo Compacto */}
         <div className="p-3 border-b border-[#8C7FE9]/20 bg-white/50 backdrop-blur-sm">
           <div className="flex items-center justify-between">
@@ -193,9 +180,9 @@ const Sidebar = ({ isOpen, onClose, onStateChange }) => {
           </div>
         </div>
 
-        {/* Navegación Corporativa Compacta */}
-        <nav className="p-3 space-y-1 flex-1 overflow-y-auto">
-          {menuItems.map((item, index) => (
+        {/* Navegación Corporativa Compacta (↓ aquí bajamos el inicio) */}
+        <nav className="p-3 pt-8 md:pt-10 lg:pt-12 space-y-1 flex-1 overflow-y-auto">
+          {menuItems.map((item) => (
             <Link
               key={item.name}
               to={item.path}
@@ -205,8 +192,7 @@ const Sidebar = ({ isOpen, onClose, onStateChange }) => {
                 ${isExpanded ? 'p-2 rounded-lg space-x-2' : 'p-1.5 rounded-md justify-center'}
                 ${location.pathname === item.path 
                   ? 'bg-[#8C7FE9] text-white shadow-md' 
-                  : 'text-[#342B7C] hover:bg-[#8C7FE9]/10 hover:text-[#342B7C]'
-                }
+                  : 'text-[#342B7C] hover:bg-[#8C7FE9]/10 hover:text-[#342B7C]'}
                 border border-transparent hover:border-[#8C7FE9]/30
                 transform hover:translate-x-1
               `}
@@ -221,15 +207,12 @@ const Sidebar = ({ isOpen, onClose, onStateChange }) => {
                 transition-all duration-300 flex items-center justify-center relative
                 ${location.pathname === item.path 
                   ? 'bg-white/20' 
-                  : 'bg-[#8C7FE9]/10 group-hover:bg-[#8C7FE9]/20'
-                }
+                  : 'bg-[#8C7FE9]/10 group-hover:bg-[#8C7FE9]/20'}
                 ${isExpanded ? 'p-1.5 rounded-md w-8 h-8' : 'p-1 rounded w-7 h-7'}
                 ${getIconAnimation(item.name)}
                 group-hover:scale-105
               `}>
                 {item.icon}
-                
-                {/* Efecto de brillo sutil */}
                 <div className="absolute inset-0 rounded-md bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </div>
               
@@ -244,7 +227,6 @@ const Sidebar = ({ isOpen, onClose, onStateChange }) => {
                 </div>
               )}
 
-              {/* Indicador de hover expandido */}
               {isExpanded && (
                 <div className="opacity-0 group-hover:opacity-100 transform -translate-x-1 group-hover:translate-x-0 transition-all duration-300">
                   <FaChevronRight className="w-2 h-2 text-[#C19CFF]" />
@@ -290,7 +272,6 @@ const Sidebar = ({ isOpen, onClose, onStateChange }) => {
               <p className="text-[#8C7FE9] text-xs font-medium tracking-tight">
                 v2.1 Corporativo
               </p>
-              {/* Indicadores de estado */}
               <div className="flex justify-center space-x-1 mt-1.5">
                 {[1, 2, 3].map((dot) => (
                   <div 
