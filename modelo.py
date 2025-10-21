@@ -2,7 +2,7 @@
 # 🔬 Entrenamiento de un modelo Deep Learning (MobileNetV2)
 # Proyecto: Clasificación de enfermedades de la piel
 # Integrantes:
-#Auino Sandoval Xiomara 
+#Aquino Sandoval Kenya Xiomara 
 #Aracayo Mamani Jhon Marco 
 #Canaza Paucara Juan Diego 
 #Castro Callo Vanesa Yhoselin 
