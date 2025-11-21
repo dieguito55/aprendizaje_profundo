@@ -1,361 +1,821 @@
-// src/pages/Analizar.jsx
-import React, { useEffect, useState } from 'react';
+﻿import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 import {
-  FaImages,
-  FaUserMd,
-  FaChevronDown,
-  FaCheckCircle,
-  FaTimes,
-  FaClock,
-  FaLayerGroup,
-  FaBrain,
-  FaShieldAlt
+  FaHome, FaChevronRight, FaUserMd, FaCheckCircle, FaTimes, 
+  FaClock, FaBrain, FaCloudUploadAlt, FaChartBar, FaShieldAlt,
+  FaExclamationTriangle, FaFilter, FaSearch, FaStar, FaEye,
+  FaFileExport, FaHistory, FaLightbulb, FaAward, FaMicroscope,
+  FaList, FaMapMarkerAlt, FaCalendarAlt, FaStethoscope
 } from 'react-icons/fa';
 
 const Analizar = () => {
-  const [isVisible, setIsVisible] = useState(false);
-  useEffect(() => setIsVisible(true), []);
+    const [activeTab, setActiveTab] = useState('all');
+  const [filterQuality, setFilterQuality] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('date');
+  const [selectedImage, setSelectedImage] = useState(null);
 
-  // Paleta
-  const colors = {
-    primary: '#342B7C',
-    secondary: '#8C7FE9',
-    accent: '#C19CFF',
-    light: '#FDEEFD',
-    medium: '#D8DFF9'
+  // Mock data expandido - Imágenes pendientes
+  const pendingImages = [
+    { id: 1, disease: 'Melanoma Maligno', confidence: 94, priority: 'high', date: '2024-11-21 14:30', specialist: 'Dr. García', img: '/derma1.png', aiVersion: 'v2.3' },
+    { id: 2, disease: 'Nevus Melanocítico', confidence: 88, priority: 'medium', date: '2024-11-21 13:15', specialist: 'Dra. Martínez', img: '/derma2.png', aiVersion: 'v2.3' },
+    { id: 3, disease: 'Queratosis Seborreica', confidence: 91, priority: 'medium', date: '2024-11-21 12:00', specialist: 'Dr. López', img: '/derma3.png', aiVersion: 'v2.2' },
+    { id: 4, disease: 'Carcinoma Basocelular', confidence: 96, priority: 'high', date: '2024-11-21 11:30', specialist: 'Dra. Rodríguez', img: '/derma4.png', aiVersion: 'v2.3' },
+    { id: 5, disease: 'Dermatitis Atópica', confidence: 87, priority: 'low', date: '2024-11-21 10:00', specialist: 'Dr. García', img: '/derma5.png', aiVersion: 'v2.2' },
+    { id: 6, disease: 'Psoriasis', confidence: 89, priority: 'medium', date: '2024-11-21 09:15', specialist: 'Dra. Martínez', img: '/derma6.png', aiVersion: 'v2.3' }
+  ];
+
+  // Imágenes aprobadas
+  const approvedImages = [
+    { id: 7, disease: 'Melanoma', confidence: 95, date: '2024-11-20', reviewer: 'Dr. García', img: '/derma7.png' },
+    { id: 8, disease: 'Carcinoma Basocelular', confidence: 93, date: '2024-11-20', reviewer: 'Dra. Martínez', img: '/derma8.png' },
+    { id: 9, disease: 'Dermatitis Atópica', confidence: 90, date: '2024-11-19', reviewer: 'Dr. López', img: '/derma9.png' }
+  ];
+
+  // Imágenes rechazadas
+  const rejectedImages = [
+    { id: 10, disease: 'Imagen borrosa', confidence: 76, reason: 'Calidad insuficiente', date: '2024-11-19', img: '/derma1.png' },
+    { id: 11, disease: 'Iluminación deficiente', confidence: 72, reason: 'Condiciones inadecuadas', date: '2024-11-18', img: '/derma2.png' }
+  ];
+
+  const stats = [
+    { label: 'Pendientes Calificación', value: pendingImages.length, icon: FaClock, color: 'amber', change: '+3', trend: 'up' },
+    { label: 'Validadas y Aprobadas', value: approvedImages.length, icon: FaCheckCircle, color: 'green', change: '+8', trend: 'up' },
+    { label: 'Rechazadas', value: rejectedImages.length, icon: FaTimes, color: 'red', change: '-2', trend: 'down' },
+    { label: 'Precisión del Modelo', value: '94.2%', icon: FaBrain, color: 'primary', change: '+2.1%', trend: 'up' }
+  ];
+
+  const ImageCard = ({ image, type = 'pending' }) => {
+    const priorityConfig = {
+      high: { bg: 'bg-red-100', text: 'text-red-700', border: 'border-red-300', label: 'ALTA PRIORIDAD' },
+      medium: { bg: 'bg-amber-100', text: 'text-amber-700', border: 'border-amber-300', label: 'PRIORIDAD MEDIA' },
+      low: { bg: 'bg-blue-100', text: 'text-blue-700', border: 'border-blue-300', label: 'PRIORIDAD BAJA' }
+    };
+
+    const priority = image.priority ? priorityConfig[image.priority] : null;
+
+    return (
+      <article className="bg-white dark:bg-neutral-900 rounded-xl overflow-hidden border border-neutral-200 dark:border-neutral-700 hover:shadow-2xl transition-all duration-300 group">
+        {/* Imagen con overlay */}
+        <div className="relative h-56 bg-neutral-900 overflow-hidden">
+          <img 
+            src={image.img}
+            alt={image.disease}
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+          />
+          
+          {/* Gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+          
+          {/* Top badges */}
+          <div className="absolute top-3 left-3 right-3 flex justify-between items-start">
+            {priority && type === 'pending' && (
+              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md ${priority.bg} ${priority.text} text-[10px] font-bold border ${priority.border} shadow-lg`}>
+                <FaExclamationTriangle className="w-3 h-3" />
+                {priority.label}
+              </span>
+            )}
+            
+            {type === 'approved' && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#8ab824] text-white text-[10px] font-bold shadow-lg">
+                <FaCheckCircle className="w-3 h-3" />
+                APROBADA
+              </span>
+            )}
+            
+            {type === 'rejected' && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-red-600 text-white text-[10px] font-bold shadow-lg">
+                <FaTimes className="w-3 h-3" />
+                RECHAZADA
+              </span>
+            )}
+
+            <div className="ml-auto px-3 py-1.5 rounded-md bg-white dark:bg-neutral-900/95 backdrop-blur-sm shadow-lg">
+              <span className="text-sm font-bold" style={{ color: '#A8D32C' }}>
+                {image.confidence}%
+              </span>
+            </div>
+          </div>
+
+          {/* Bottom info on image */}
+          <div className="absolute bottom-3 left-3 right-3">
+            <h3 className="font-bold text-white text-base leading-tight mb-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
+              {image.disease}
+            </h3>
+            <div className="flex items-center gap-2 text-xs text-white/90">
+              <FaClock className="w-3 h-3" />
+              <span>{image.date.split(' ')[0]}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Card content */}
+        <div className="p-4">
+          {/* Progress bar */}
+          <div className="mb-3">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 dark:text-neutral-500">Nivel de Confianza</span>
+              <span className="text-xs font-bold text-neutral-900 dark:text-white">{image.confidence}%</span>
+            </div>
+            <div className="w-full h-2 bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden">
+              <div 
+                className="h-2 rounded-full transition-all duration-700"
+                style={{ 
+                  width: `${image.confidence}%`,
+                  backgroundColor: image.confidence >= 90 ? '#A8D32C' : image.confidence >= 80 ? '#D97706' : '#DC2626'
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Metadata grid */}
+          <div className="grid grid-cols-2 gap-2 mb-3 pb-3 border-b border-neutral-100 dark:border-neutral-800">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-[#A8D32C]/10 flex items-center justify-center">
+                <FaBrain className="w-3.5 h-3.5 text-[#A8D32C]" />
+              </div>
+              <div>
+                <p className="text-[10px] text-neutral-500 dark:text-neutral-400 dark:text-neutral-500 uppercase tracking-wide font-semibold">Modelo IA</p>
+                <p className="text-xs font-bold text-neutral-900 dark:text-white">{image.aiVersion || 'v2.3'}</p>
+              </div>
+            </div>
+            
+            {image.specialist && (
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-[#A8D32C]/10 flex items-center justify-center">
+                  <FaUserMd className="w-3.5 h-3.5 text-[#A8D32C]" />
+                </div>
+                <div>
+                  <p className="text-[10px] text-neutral-500 dark:text-neutral-400 dark:text-neutral-500 uppercase tracking-wide font-semibold">Asignado</p>
+                  <p className="text-xs font-bold text-neutral-900 dark:text-white truncate">{image.specialist}</p>
+                </div>
+              </div>
+            )}
+
+            {image.reviewer && (
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-[#A8D32C]/10 flex items-center justify-center">
+                  <FaAward className="w-3.5 h-3.5 text-[#A8D32C]" />
+                </div>
+                <div>
+                  <p className="text-[10px] text-neutral-500 dark:text-neutral-400 dark:text-neutral-500 uppercase tracking-wide font-semibold">Validado</p>
+                  <p className="text-xs font-bold text-neutral-900 dark:text-white truncate">{image.reviewer}</p>
+                </div>
+              </div>
+            )}
+
+            {image.reason && (
+              <div className="col-span-2">
+                <p className="text-[10px] text-neutral-500 dark:text-neutral-400 dark:text-neutral-500 uppercase tracking-wide font-semibold mb-1">Motivo Rechazo</p>
+                <p className="text-xs text-red-700 font-medium">{image.reason}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Actions */}
+          {type === 'pending' && (
+            <div className="grid grid-cols-3 gap-2">
+              <button className="flex items-center justify-center gap-1.5 py-2 rounded-lg bg-[#A8D32C]/10 hover:bg-[#C5E86C]/20 text-[#8ab824] font-bold text-xs transition-all duration-200 hover:shadow-md">
+                <FaCheckCircle className="w-3.5 h-3.5" />
+                Aprobar
+              </button>
+              <button className="flex items-center justify-center gap-1.5 py-2 rounded-lg bg-red-50 hover:bg-red-100 text-red-700 font-bold text-xs transition-all duration-200 hover:shadow-md">
+                <FaTimes className="w-3.5 h-3.5" />
+                Rechazar
+              </button>
+              <button 
+                onClick={() => setSelectedImage({ ...image, modalType: 'pending' })}
+                className="flex items-center justify-center gap-1.5 py-2 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs transition-all duration-200 hover:shadow-md"
+              >
+                <FaEye className="w-3.5 h-3.5" />
+                Ver
+              </button>
+            </div>
+          )}
+
+          {type === 'approved' && (
+            <div className="grid grid-cols-2 gap-2">
+              <button className="flex items-center justify-center gap-1.5 py-2 rounded-lg bg-[#A8D32C]/10 hover:bg-[#C5E86C]/20 text-[#8ab824] font-bold text-xs transition-all duration-200">
+                <FaFileExport className="w-3.5 h-3.5" />
+                Exportar
+              </button>
+              <button 
+                onClick={() => setSelectedImage({ ...image, modalType: 'approved' })}
+                className="flex items-center justify-center gap-1.5 py-2 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs transition-all duration-200"
+              >
+                <FaEye className="w-3.5 h-3.5" />
+                Ver
+              </button>
+            </div>
+          )}
+
+          {type === 'rejected' && (
+            <div className="grid grid-cols-2 gap-2">
+              <button className="flex items-center justify-center gap-1.5 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-900 hover:bg-neutral-100 dark:hover:bg-neutral-800 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 font-bold text-xs transition-all duration-200">
+                <FaHistory className="w-3.5 h-3.5" />
+                Revisar
+              </button>
+              <button 
+                onClick={() => setSelectedImage({ ...image, modalType: 'rejected' })}
+                className="flex items-center justify-center gap-1.5 py-2 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs transition-all duration-200"
+              >
+                <FaEye className="w-3.5 h-3.5" />
+                Ver
+              </button>
+            </div>
+          )}
+        </div>
+      </article>
+    );
   };
 
-  // ---- Mock data ----
-  // Finta de 4 para calificación (con nombres dermaX.png)
-  const pendingImages = [
-    { id: 'p1', disease: 'Melanoma',                percent: 0.82, qualified: false, img: '/derma1.png' },
-    { id: 'p2', disease: 'Nevus atípico',           percent: 0.85, qualified: false, img: '/derma2.png' },
-    { id: 'p3', disease: 'Queratosis seborreica',   percent: 0.90, qualified: false, img: '/derma3.png' },
-    { id: 'p4', disease: 'Carcinoma basocelular',   percent: 0.92, qualified: false, img: '/derma4.png' }
-  ];
-
-  // Revisadas (aprobadas / rechazadas) con derma5+ y % dentro del 80-100
-  const reviewedOK = [
-    { id: 'ok1', disease: 'Melanoma',                percent: 0.91, img: '/derma5.png' },
-    { id: 'ok2', disease: 'Carcinoma basocelular',   percent: 0.82, img: '/derma6.png' },
-    { id: 'ok3', disease: 'Lesión actínica',         percent: 0.93, img: '/derma7.png' }
-  ];
-  const reviewedBad = [
-    { id: 'bad1', disease: 'Nevus (artefactos)',     percent: 0.94, img: '/derma8.png' },
-    { id: 'bad2', disease: 'Lesión borrosa',         percent: 0.86, img: '/derma9.png' }
-  ];
-
-  // Intervalo 80–100% aplicado a las secciones de “ya revisadas”
-  const RANGE = { min: 0.8, max: 1.0 };
-  const inRange = (p) => p >= RANGE.min && p <= RANGE.max;
-  const reviewedOKFiltered = reviewedOK.filter(i => inRange(i.percent));
-  const reviewedBadFiltered = reviewedBad.filter(i => inRange(i.percent));
-
-  // Animaciones
-  const animationClasses = `
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(30px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes float {
-      0%,100% { transform: translateY(0); }
-      50%     { transform: translateY(-10px); }
-    }
-    @keyframes pulse-glow {
-      0%,100% { box-shadow: 0 0 5px ${colors.accent}40; }
-      50%     { box-shadow: 0 0 20px ${colors.accent}80; }
-    }
-    .animate-fadeInUp { animation: fadeInUp 0.8s ease-out forwards; }
-    .animate-float { animation: float 3s ease-in-out infinite; }
-    .animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
-  `;
-
   return (
-    <>
-      <style>{animationClasses}</style>
-
-      <div className="min-h-screen bg-gradient-to-br from-[#FDEEFD] via-[#D8DFF9] to-[#FDEEFD]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-
-          {/* Header / Hero */}
-          <section className={`text-center mb-16 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-            <div className="flex justify-center mb-8 animate-float">
-              <div className="relative">
-                <div className="w-28 h-28 bg-gradient-to-br from-[#8C7FE9] to-[#342B7C] rounded-3xl flex items-center justify-center shadow-2xl animate-pulse-glow">
-                  <FaImages className="text-white text-4xl" />
-                </div>
-                <div className="absolute -inset-4 bg-gradient-to-r from-[#8C7FE9] to-[#C19CFF] rounded-3xl opacity-30 blur-xl animate-pulse" />
-              </div>
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900" style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif' }}>
+      {/* Breadcrumb */}
+      <div className="bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-700 sticky top-0 z-30">
+        <div className="max-w-[1600px] mx-auto px-6 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2 text-sm">
+              <Link to="/" className="flex items-center space-x-2 text-[#A8D32C] hover:text-[#A8D32C] transition-colors">
+                <FaHome className="w-4 h-4" />
+                <span className="font-semibold">Inicio</span>
+              </Link>
+              <FaChevronRight className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
+              <span className="text-neutral-900 dark:text-white font-semibold">Sistema de Análisis Médico</span>
             </div>
-
-            <h1 className="text-5xl md:text-6xl font-bold text-[#342B7C] leading-tight">
-              Analizar imágenes
-              <span className="block text-2xl md:text-3xl text-[#8C7FE9] mt-4 font-light">
-                Flujo de calificación y reentrenamiento
-              </span>
-            </h1>
-
-            <p className="text-[#342B7C]/80 text-xl mt-6 max-w-3xl mx-auto">
-              Revisión por dermatólogo con priorización por probabilidad y separación clara
-              de material que <span className="font-semibold text-[#8C7FE9]">sirve para reentrenamiento</span> o que <span className="font-semibold text-[#C19CFF]">no cumple criterios</span>.
-            </p>
-
-            <div className="flex justify-center mt-8">
-              <FaChevronDown className="text-[#342B7C] text-2xl animate-bounce" />
-            </div>
-          </section>
-
-          <div className="space-y-16">
-            {/* Sección 1: Imágenes para calificación (finta de 4) */}
-            <section className={`transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
-              <div className="bg-white/80 backdrop-blur-lg rounded-3xl p-6 md:p-8 shadow-2xl border border-white/40 relative overflow-hidden">
-                {/* Decoración */}
-                <div className="absolute -top-16 -left-16 w-48 h-48 bg-[#8C7FE9]/10 rounded-full blur-3xl" />
-                <div className="absolute -bottom-16 -right-16 w-56 h-56 bg-[#C19CFF]/10 rounded-full blur-3xl" />
-
-                <div className="relative z-10">
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-gradient-to-r from-[#8C7FE9] to-[#342B7C] rounded-xl flex items-center justify-center shadow-lg">
-                        <FaUserMd className="text-white w-6 h-6" />
-                      </div>
-                      <div>
-                        <h2 className="text-2xl md:text-3xl font-bold text-[#342B7C]">
-                          Imágenes para calificación por dermatólogo
-                        </h2>
-                        <p className="text-[#342B7C]/60">Lote actual — 4 pendientes</p>
-                      </div>
-                    </div>
-
-                    {/* Botón cambiado a “Calificar” */}
-                    <div className="hidden sm:flex items-center space-x-2">
-                      <span className="text-sm text-[#342B7C]/50">Acción</span>
-                      <button
-                        className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#342B7C] to-[#8C7FE9] text-white font-semibold shadow-lg hover:shadow-xl transition"
-                        type="button"
-                      >
-                        <FaCheckCircle className="inline-block mr-2 -mt-1" />
-                        Calificar
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Grid de 4 tarjetas */}
-                  <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {pendingImages.map((item) => (
-                      <article
-                        key={item.id}
-                        className="
-                          group relative overflow-hidden rounded-2xl
-                          bg-white/70 backdrop-blur-sm border border-white/40
-                          shadow-lg hover:shadow-2xl transition-all duration-300
-                          hover:-translate-y-1
-                        "
-                      >
-                        <div className="relative h-40 bg-[#000]">
-                          <img
-                            src={item.img}
-                            alt={item.disease}
-                            className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition"
-                          />
-                          {/* Etiqueta probabilidad */}
-                          <div className="absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-semibold text-white shadow-md
-                                          bg-gradient-to-r from-[#8C7FE9] to-[#C19CFF]">
-                            {(item.percent * 100).toFixed(0)}%
-                          </div>
-                        </div>
-
-                        <div className="p-4 space-y-2">
-                          <h3 className="font-bold text-[#342B7C] text-lg truncate">{item.disease}</h3>
-
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm text-[#342B7C]/60">Calificado</span>
-                            <span
-                              className={`px-2 py-1 rounded-lg text-xs font-semibold ${
-                                item.qualified
-                                  ? 'bg-gradient-to-r from-[#34C759] to-[#258CAB] text-white'
-                                  : 'bg-gradient-to-r from-[#FDEEFD] to-[#D8DFF9] text-[#342B7C]'
-                              }`}
-                            >
-                              {item.qualified ? 'Sí' : 'No'}
-                            </span>
-                          </div>
-
-                          {/* Barra de probabilidad */}
-                          <div className="w-full bg-[#342B7C]/10 rounded-full h-2 overflow-hidden">
-                            <div
-                              className="h-2 rounded-full bg-gradient-to-r from-[#8C7FE9] to-[#342B7C]"
-                              style={{ width: `${item.percent * 100}%` }}
-                            />
-                          </div>
-
-                          {/* Chips info */}
-                          <div className="flex items-center justify-between text-xs">
-                            <div className="flex items-center space-x-2 text-[#342B7C]/60">
-                              <FaBrain className="w-3 h-3" />
-                              <span>Modelo</span>
-                            </div>
-                            <div className="flex items-center space-x-2 text-[#342B7C]/60">
-                              <FaShieldAlt className="w-3 h-3" />
-                              <span>Privado</span>
-                            </div>
-                          </div>
-                        </div>
-                      </article>
-                    ))}
-                  </div>
-
-                  {/* Intervalo 80-100 debajo de esas imágenes */}
-                  <div className="mt-6 flex items-center justify-center">
-                    <span className="px-4 py-2 rounded-full text-sm font-semibold text-[#342B7C] bg-gradient-to-r from-[#FDEEFD] to-[#D8DFF9] border border-[#8C7FE9]/20">
-                      Intervalo de probabilidad activo para revisadas: <strong className="ml-1">80% – 100%</strong>
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* Sección 2: Ya revisadas — Cumple / No cumple (filtradas por 80–100) */}
-            <section className={`transition-all duration-700 delay-200 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
-              <div className="bg-white/80 backdrop-blur-lg rounded-3xl p-6 md:p-8 shadow-2xl border border-white/40 relative overflow-hidden">
-                <div className="absolute -top-24 right-0 w-64 h-64 bg-[#8C7FE9]/10 rounded-full blur-3xl translate-x-16" />
-                <div className="relative z-10 space-y-10">
-
-                  {/* Cumple para reentrenamiento */}
-                  <div>
-                    <div className="flex items-center space-x-3 mb-5">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-[#34C759] to-[#258CAB] text-white flex items-center justify-center shadow-lg">
-                        <FaCheckCircle className="w-6 h-6" />
-                      </div>
-                      <div>
-                        <h3 className="text-2xl font-bold text-[#342B7C]">Cumple para reentrenamiento</h3>
-                        <p className="text-[#342B7C]/60">Imágenes validadas por dermatólogo (filtradas 80–100%)</p>
-                      </div>
-                    </div>
-
-                    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {reviewedOKFiltered.map((item) => (
-                        <article
-                          key={item.id}
-                          className="group rounded-2xl overflow-hidden bg-white/70 border border-white/40 shadow-lg hover:shadow-2xl transition"
-                        >
-                          <div className="relative h-44">
-                            <img src={item.img} alt={item.disease} className="w-full h-full object-cover" />
-                            <div className="absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-semibold text-white shadow-md bg-gradient-to-r from-[#34C759] to-[#258CAB]">
-                              Aprobada
-                            </div>
-                          </div>
-                          <div className="p-4">
-                            <div className="flex items-center justify-between">
-                              <h4 className="font-semibold text-[#342B7C]">{item.disease}</h4>
-                              <span className="text-sm px-2 py-1 rounded-lg bg-gradient-to-r from-[#8C7FE9] to-[#C19CFF] text-white font-semibold">
-                                {(item.percent * 100).toFixed(0)}%
-                              </span>
-                            </div>
-                            <div className="mt-3 w-full bg-[#342B7C]/10 rounded-full h-2 overflow-hidden">
-                              <div
-                                className="h-2 rounded-full bg-gradient-to-r from-[#34C759] to-[#258CAB]"
-                                style={{ width: `${item.percent * 100}%` }}
-                              />
-                            </div>
-                          </div>
-                        </article>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* No cumple */}
-                  <div>
-                    <div className="flex items-center space-x-3 mb-5">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-[#F15F79] to-[#C19CFF] text-white flex items-center justify-center shadow-lg">
-                        <FaTimes className="w-6 h-6" />
-                      </div>
-                      <div>
-                        <h3 className="text-2xl font-bold text-[#342B7C]">No cumple</h3>
-                        <p className="text-[#342B7C]/60">Criterios insuficientes (filtradas 80–100%)</p>
-                      </div>
-                    </div>
-
-                    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {reviewedBadFiltered.map((item) => (
-                        <article
-                          key={item.id}
-                          className="group rounded-2xl overflow-hidden bg-white/70 border border-white/40 shadow-lg hover:shadow-2xl transition"
-                        >
-                          <div className="relative h-44">
-                            <img src={item.img} alt={item.disease} className="w-full h-full object-cover" />
-                            <div className="absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-semibold text-white shadow-md bg-gradient-to-r from-[#F15F79] to-[#C19CFF]">
-                              Rechazada
-                            </div>
-                          </div>
-                          <div className="p-4">
-                            <div className="flex items-center justify-between">
-                              <h4 className="font-semibold text-[#342B7C]">{item.disease}</h4>
-                              <span className="text-sm px-2 py-1 rounded-lg bg-gradient-to-r from-[#8C7FE9] to-[#C19CFF] text-white font-semibold">
-                                {(item.percent * 100).toFixed(0)}%
-                              </span>
-                            </div>
-                            <div className="mt-3 w-full bg-[#342B7C]/10 rounded-full h-2 overflow-hidden">
-                              <div
-                                className="h-2 rounded-full bg-gradient-to-r from-[#F15F79] to-[#C19CFF]"
-                                style={{ width: `${item.percent * 100}%` }}
-                              />
-                            </div>
-                          </div>
-                        </article>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Resumen / CTA inferior */}
-                  <div className="mt-4 grid md:grid-cols-3 gap-4">
-                    <div className="rounded-2xl p-4 bg-gradient-to-br from-[#FDEEFD] to-[#D8DFF9] border border-[#8C7FE9]/20">
-                      <div className="flex items-center space-x-3 text-[#342B7C]">
-                        <FaClock className="w-5 h-5" />
-                        <div>
-                          <p className="text-sm text-[#342B7C]/70">Pendientes</p>
-                          <p className="font-bold text-lg">{pendingImages.length}</p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="rounded-2xl p-4 bg-gradient-to-br from-[#34C759]/10 to-[#258CAB]/10 border border-[#34C759]/30">
-                      <div className="flex items-center space-x-3 text-[#2a7d3a]">
-                        <FaCheckCircle className="w-5 h-5" />
-                        <div>
-                          <p className="text-sm text-[#2a7d3a]/80">Aprobadas</p>
-                          <p className="font-bold text-lg">{reviewedOKFiltered.length}</p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="rounded-2xl p-4 bg-gradient-to-br from-[#F15F79]/10 to-[#C19CFF]/10 border border-[#F15F79]/30">
-                      <div className="flex items-center space-x-3 text-[#a43b50]">
-                        <FaTimes className="w-5 h-5" />
-                        <div>
-                          <p className="text-sm text-[#a43b50]/80">Rechazadas</p>
-                          <p className="font-bold text-lg">{reviewedBadFiltered.length}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                </div>
-              </div>
-            </section>
-          </div>
-
-          {/* Pie informativo */}
-          <div className="mt-12 text-center text-[#342B7C]/60 text-sm">
-            <div className="inline-flex items-center space-x-2 px-4 py-2 rounded-xl bg-white/60 border border-white/40 backdrop-blur-sm">
-              <FaLayerGroup className="w-4 h-4" />
-              <span>
-                Este módulo es <strong className="text-[#342B7C]">educativo</strong> y simula un flujo real de revisión para reentrenamiento del modelo.
-              </span>
+            
+            <div className="hidden md:flex items-center gap-3">
+              <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 hover:border-primary-300 text-neutral-700 dark:text-neutral-300 font-semibold text-sm transition-all duration-200 hover:shadow-md">
+                <FaFileExport className="w-4 h-4" />
+                Exportar Datos
+              </button>
+              <button className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm text-white transition-all duration-200 hover:shadow-lg dark:hover:shadow-neutral-900/50" style={{ backgroundColor: '#A8D32C' }}>
+                <FaCloudUploadAlt className="w-4 h-4" />
+                Cargar Imágenes
+              </button>
             </div>
           </div>
-
         </div>
       </div>
-    </>
+
+      <div className="max-w-[1600px] mx-auto px-6 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center gap-4 mb-6">
+            <div className="w-16 h-16 rounded-xl flex items-center justify-center shadow-xl dark:shadow-neutral-900/50" style={{ backgroundColor: '#A8D32C' }}>
+              <FaMicroscope className="w-8 h-8 text-white" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-bold text-neutral-900 dark:text-white leading-tight" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                Sistema de Análisis Dermatológico
+              </h1>
+              <p className="text-neutral-600 dark:text-neutral-400 dark:text-neutral-500 mt-1 text-base">
+                Plataforma profesional de revisión médica con IA • Reentrenamiento continuo del modelo
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Grid - 4 columnas */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+          {stats.map((stat, index) => {
+            const Icon = stat.icon;
+            const colorMap = {
+              amber: { bg: 'bg-amber-50', text: 'text-amber-700', icon: 'text-amber-600', border: 'border-amber-200' },
+              green: { bg: 'bg-[#A8D32C]/10', text: 'text-[#8ab824]', icon: 'text-[#A8D32C]', border: 'border-[#C5E86C]' },
+              red: { bg: 'bg-red-50', text: 'text-red-700', icon: 'text-red-600', border: 'border-red-200' },
+              primary: { bg: 'bg-[#A8D32C]/10', text: 'text-[#8ab824]', icon: 'text-[#A8D32C]', border: 'border-[#C5E86C]' }
+            };
+            const colors = colorMap[stat.color];
+
+            return (
+              <div key={index} className={`bg-white dark:bg-neutral-900 rounded-xl p-5 border-2 ${colors.border} hover:shadow-xl dark:shadow-neutral-900/50 transition-all duration-300`}>
+                <div className="flex items-center justify-between mb-4">
+                  <div className={`w-12 h-12 rounded-xl ${colors.bg} flex items-center justify-center`}>
+                    <Icon className={`w-6 h-6 ${colors.icon}`} />
+                  </div>
+                  <div className={`flex items-center gap-1 px-2 py-1 rounded-md ${colors.bg} ${colors.text}`}>
+                    <span className="text-xs font-bold">{stat.change}</span>
+                    {stat.trend === 'up' ? '↑' : '↓'}
+                  </div>
+                </div>
+                <p className="text-3xl font-bold text-neutral-900 dark:text-white mb-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                  {stat.value}
+                </p>
+                <p className="text-sm text-neutral-600 dark:text-neutral-400 dark:text-neutral-500 font-medium">{stat.label}</p>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Tabs para filtrar por estado */}
+        <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-700 shadow-sm mb-6">
+          <div className="flex border-b border-neutral-200 dark:border-neutral-700">
+            <button
+              onClick={() => setActiveTab('all')}
+              className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 text-sm font-bold transition-all duration-200 ${
+                activeTab === 'all'
+                  ? 'border-b-3 text-neutral-900 dark:text-white'
+                  : 'text-neutral-500 dark:text-neutral-400 dark:text-neutral-500 hover:text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:bg-neutral-900'
+              }`}
+              style={activeTab === 'all' ? { borderBottomColor: '#A8D32C', borderBottomWidth: '3px' } : {}}
+            >
+              <FaList className="w-4 h-4" />
+              <span>Todas</span>
+              <span className="ml-1 px-2 py-0.5 rounded-full text-xs font-bold bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
+                {pendingImages.length + approvedImages.length + rejectedImages.length}
+              </span>
+            </button>
+            
+            <button
+              onClick={() => setActiveTab('pending')}
+              className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 text-sm font-bold transition-all duration-200 ${
+                activeTab === 'pending'
+                  ? 'border-b-3 text-neutral-900 dark:text-white'
+                  : 'text-neutral-500 dark:text-neutral-400 dark:text-neutral-500 hover:text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:bg-neutral-900'
+              }`}
+              style={activeTab === 'pending' ? { borderBottomColor: '#F59E0B', borderBottomWidth: '3px' } : {}}
+            >
+              <FaClock className="w-4 h-4" />
+              <span>Pendientes</span>
+              <span className="ml-1 px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-700">
+                {pendingImages.length}
+              </span>
+            </button>
+            
+            <button
+              onClick={() => setActiveTab('approved')}
+              className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 text-sm font-bold transition-all duration-200 ${
+                activeTab === 'approved'
+                  ? 'border-b-3 text-neutral-900 dark:text-white'
+                  : 'text-neutral-500 dark:text-neutral-400 dark:text-neutral-500 hover:text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:bg-neutral-900'
+              }`}
+              style={activeTab === 'approved' ? { borderBottomColor: '#A8D32C', borderBottomWidth: '3px' } : {}}
+            >
+              <FaCheckCircle className="w-4 h-4" />
+              <span>Validadas</span>
+              <span className="ml-1 px-2 py-0.5 rounded-full text-xs font-bold bg-[#C5E86C]/20 text-[#8ab824]">
+                {approvedImages.length}
+              </span>
+            </button>
+            
+            <button
+              onClick={() => setActiveTab('rejected')}
+              className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 text-sm font-bold transition-all duration-200 ${
+                activeTab === 'rejected'
+                  ? 'border-b-3 text-neutral-900 dark:text-white'
+                  : 'text-neutral-500 dark:text-neutral-400 dark:text-neutral-500 hover:text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:bg-neutral-900'
+              }`}
+              style={activeTab === 'rejected' ? { borderBottomColor: '#EF4444', borderBottomWidth: '3px' } : {}}
+            >
+              <FaTimes className="w-4 h-4" />
+              <span>Rechazadas</span>
+              <span className="ml-1 px-2 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700">
+                {rejectedImages.length}
+              </span>
+            </button>
+          </div>
+        </div>
+
+        {/* Filter & Search Bar - Diseño mejorado */}
+        <div className="bg-white dark:bg-neutral-900 rounded-xl p-6 border-2 shadow-lg mb-8" style={{ borderColor: '#A8D32C' }}>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#A8D32C' }}>
+              <FaFilter className="w-5 h-5 text-white" />
+            </div>
+            <h3 className="text-lg font-bold text-neutral-900 dark:text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
+              Filtros y Búsqueda Avanzada
+            </h3>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-2 uppercase tracking-wide">
+                <FaSearch className="inline w-3 h-3 mr-1.5" />
+                Búsqueda
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Enfermedad, especialista..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-4 pr-4 py-3 border-2 border-neutral-200 dark:border-neutral-700 rounded-lg focus:border-[#A8D32C] focus:ring-2 focus:ring-[#C5E86C]/30 outline-none transition-all text-sm font-medium"
+                />
+              </div>
+            </div>
+            
+            <div>
+              <label className="block text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-2 uppercase tracking-wide">
+                <FaShieldAlt className="inline w-3 h-3 mr-1.5" />
+                Calidad de Confianza
+              </label>
+              <select
+                value={filterQuality}
+                onChange={(e) => setFilterQuality(e.target.value)}
+                className="w-full px-4 py-3 border-2 border-neutral-200 dark:border-neutral-700 rounded-lg focus:border-[#A8D32C] focus:ring-2 focus:ring-[#C5E86C]/30 outline-none transition-all text-sm font-semibold appearance-none bg-white dark:bg-neutral-900 cursor-pointer"
+                style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%232F8F4E'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', backgroundSize: '1.25rem' }}
+              >
+                <option value="all">📊 Todas las Calidades</option>
+                <option value="excellent">⭐ Excelente (95-100%)</option>
+                <option value="good">✅ Buena (90-94%)</option>
+                <option value="acceptable">⚠️ Aceptable (80-89%)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-2 uppercase tracking-wide">
+                <FaChartBar className="inline w-3 h-3 mr-1.5" />
+                Ordenamiento
+              </label>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="w-full px-4 py-3 border-2 border-neutral-200 dark:border-neutral-700 rounded-lg focus:border-[#A8D32C] focus:ring-2 focus:ring-[#C5E86C]/30 outline-none transition-all text-sm font-semibold appearance-none bg-white dark:bg-neutral-900 cursor-pointer"
+                style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%232F8F4E'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', backgroundSize: '1.25rem' }}
+              >
+                <option value="date">🕐 Más Recientes Primero</option>
+                <option value="confidence">📈 Mayor Confianza Primero</option>
+                <option value="priority">🔥 Mayor Prioridad Primero</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Info Banner Premium */}
+        <div className="mb-8 rounded-xl p-6 border-2 shadow-lg" style={{ backgroundColor: '#F0FDF4', borderColor: '#A8D32C' }}>
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#A8D32C' }}>
+              <FaLightbulb className="w-6 h-6 text-white" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-bold text-neutral-900 dark:text-white text-lg mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                Sistema de Validación Médica con IA
+              </h3>
+              <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed mb-3">
+                Las imágenes son pre-analizadas por nuestro modelo de IA con <strong>94.2% de precisión</strong>. 
+                Cada diagnóstico requiere validación por un dermatólogo certificado antes de ser utilizado para 
+                el reentrenamiento del modelo, garantizando la mejora continua del sistema.
+              </p>
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white dark:bg-neutral-900 border border-[#C5E86C] text-xs font-semibold text-neutral-700 dark:text-neutral-300">
+                  <FaShieldAlt className="w-3.5 h-3.5 text-[#A8D32C]" />
+                  Rango de Confianza Óptimo: 80% - 100%
+                </span>
+                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white dark:bg-neutral-900 border border-[#C5E86C] text-xs font-semibold text-neutral-700 dark:text-neutral-300">
+                  <FaStar className="w-3.5 h-3.5 text-amber-500" />
+                  Validación Profesional Requerida
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Contenido dinámico según tab activo */}
+        {(activeTab === 'all' || activeTab === 'pending') && pendingImages.length > 0 && (
+          <section className="mb-10">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center">
+                  <FaClock className="w-6 h-6 text-amber-600" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-neutral-900 dark:text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                    Pendientes de Calificación
+                  </h2>
+                  <p className="text-sm text-neutral-600 dark:text-neutral-400 dark:text-neutral-500">
+                    {pendingImages.length} imágenes esperando validación médica
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {pendingImages.map(image => (
+                <ImageCard key={image.id} image={image} type="pending" />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {(activeTab === 'all' || activeTab === 'approved') && approvedImages.length > 0 && (
+          <section className="mb-10">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-[#C5E86C]/20 flex items-center justify-center">
+                  <FaCheckCircle className="w-6 h-6 text-[#A8D32C]" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-neutral-900 dark:text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                    Validadas para Reentrenamiento
+                  </h2>
+                  <p className="text-sm text-neutral-600 dark:text-neutral-400 dark:text-neutral-500">
+                    {approvedImages.length} imágenes aprobadas por especialistas médicos
+                  </p>
+                </div>
+              </div>
+              <button className="hidden md:flex items-center gap-2 px-4 py-2 rounded-lg bg-[#A8D32C]/10 hover:bg-[#C5E86C]/20 text-[#8ab824] font-semibold text-sm transition-all duration-200">
+                <FaFileExport className="w-4 h-4" />
+                Exportar Lote
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {approvedImages.map(image => (
+                <ImageCard key={image.id} image={image} type="approved" />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {(activeTab === 'all' || activeTab === 'rejected') && rejectedImages.length > 0 && (
+          <section className="mb-10">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-red-100 flex items-center justify-center">
+                  <FaTimes className="w-6 h-6 text-red-600" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-neutral-900 dark:text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                    Imágenes Rechazadas
+                  </h2>
+                  <p className="text-sm text-neutral-600 dark:text-neutral-400 dark:text-neutral-500">
+                    {rejectedImages.length} imágenes descartadas por criterios de calidad
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {rejectedImages.map(image => (
+                <ImageCard key={image.id} image={image} type="rejected" />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Footer Disclaimer */}
+        <div className="mt-12 text-center">
+          <div className="inline-flex items-center gap-3 px-6 py-4 rounded-xl bg-white dark:bg-neutral-900 border-2 border-neutral-200 dark:border-neutral-700 text-sm text-neutral-600 dark:text-neutral-400 dark:text-neutral-500 shadow-sm">
+            <FaExclamationTriangle className="w-5 h-5 text-amber-500 flex-shrink-0" />
+            <span>
+              <strong className="text-neutral-900 dark:text-white">Sistema Académico de Demostración.</strong> Los datos mostrados son simulados con fines educativos. 
+              En un entorno real, este sistema estaría conectado a una base de datos médica certificada.
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Modal de Vista Detallada */}
+      {selectedImage && createPortal(
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn" 
+          style={{ zIndex: 999999 }}
+          onClick={() => setSelectedImage(null)}
+        >
+          <div 
+            className="bg-white dark:bg-neutral-900 rounded-2xl max-w-3xl w-full max-h-[85vh] overflow-hidden shadow-2xl animate-scaleIn flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header con imagen - MÁS PEQUEÑO */}
+            <div className="relative h-52 bg-neutral-900 flex-shrink-0">
+              <img 
+                src={selectedImage.img}
+                alt={selectedImage.disease}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+              
+              <button 
+                onClick={() => setSelectedImage(null)}
+                className="absolute top-3 right-3 w-9 h-9 rounded-full bg-white dark:bg-neutral-900/20 backdrop-blur-sm hover:bg-white dark:bg-neutral-900 dark:hover:bg-neutral-800 dark:bg-neutral-900/30 flex items-center justify-center transition-all duration-200"
+              >
+                <FaTimes className="w-4 h-4 text-white" />
+              </button>
+
+              <div className="absolute bottom-4 left-4 right-4">
+                <h2 className="text-2xl font-bold text-white mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                  {selectedImage.disease}
+                </h2>
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white dark:bg-neutral-900/20 backdrop-blur-sm text-white font-semibold text-xs">
+                    <FaBrain className="w-3.5 h-3.5" />
+                    Confianza: {selectedImage.confidence}%
+                  </span>
+                  {selectedImage.priority && (
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-bold text-xs ${
+                      selectedImage.priority === 'high' ? 'bg-red-500' : 
+                      selectedImage.priority === 'medium' ? 'bg-amber-500' : 'bg-blue-500'
+                    } text-white`}>
+                      <FaExclamationTriangle className="w-3.5 h-3.5" />
+                      {selectedImage.priority === 'high' ? 'Alta' : 
+                       selectedImage.priority === 'medium' ? 'Media' : 'Baja'}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Contenido del modal con scroll personalizado */}
+            <div className="overflow-y-auto flex-1 custom-scrollbar-modal">
+              <div className="p-6">{/* Progress bar */}
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-base font-bold text-neutral-900 dark:text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                    Nivel de Confianza
+                  </h3>
+                  <span className="text-xl font-bold" style={{ color: '#A8D32C' }}>
+                    {selectedImage.confidence}%
+                  </span>
+                </div>
+                <div className="w-full h-3 bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden">
+                  <div 
+                    className="h-3 rounded-full transition-all duration-1000"
+                    style={{ 
+                      width: `${selectedImage.confidence}%`,
+                      backgroundColor: selectedImage.confidence >= 90 ? '#A8D32C' : selectedImage.confidence >= 80 ? '#D97706' : '#DC2626'
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Grid de información - MÁS COMPACTO */}
+              <div className="grid md:grid-cols-2 gap-4 mb-6">
+                <div className="bg-neutral-50 dark:bg-neutral-900 rounded-lg p-4 border border-neutral-200 dark:border-neutral-700">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#A8D32C' }}>
+                      <FaCalendarAlt className="w-4 h-4 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-neutral-500 dark:text-neutral-400 dark:text-neutral-500 font-semibold uppercase tracking-wide">Fecha</p>
+                      <p className="text-sm font-bold text-neutral-900 dark:text-white">{selectedImage.date}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-neutral-50 dark:bg-neutral-900 rounded-lg p-4 border border-neutral-200 dark:border-neutral-700">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-lg bg-[#A8D32C]/10 flex items-center justify-center">
+                      <FaBrain className="w-4 h-4 text-[#A8D32C]" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-neutral-500 dark:text-neutral-400 dark:text-neutral-500 font-semibold uppercase tracking-wide">Modelo IA</p>
+                      <p className="text-sm font-bold text-neutral-900 dark:text-white">{selectedImage.aiVersion || 'v2.3'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {selectedImage.specialist && (
+                  <div className="bg-neutral-50 dark:bg-neutral-900 rounded-lg p-4 border border-neutral-200 dark:border-neutral-700">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center">
+                        <FaUserMd className="w-4 h-4 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-neutral-500 dark:text-neutral-400 dark:text-neutral-500 font-semibold uppercase tracking-wide">Especialista</p>
+                        <p className="text-sm font-bold text-neutral-900 dark:text-white">{selectedImage.specialist}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {selectedImage.reviewer && (
+                  <div className="bg-neutral-50 dark:bg-neutral-900 rounded-lg p-4 border border-neutral-200 dark:border-neutral-700">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-lg bg-[#A8D32C]/10 flex items-center justify-center">
+                        <FaAward className="w-4 h-4 text-[#A8D32C]" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-neutral-500 dark:text-neutral-400 dark:text-neutral-500 font-semibold uppercase tracking-wide">Validado Por</p>
+                        <p className="text-sm font-bold text-neutral-900 dark:text-white">{selectedImage.reviewer}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {selectedImage.reason && (
+                  <div className="bg-red-50 rounded-lg p-4 border-2 border-red-200 md:col-span-2">
+                    <div className="flex items-start gap-2.5">
+                      <div className="w-9 h-9 rounded-lg bg-red-100 flex items-center justify-center flex-shrink-0">
+                        <FaExclamationTriangle className="w-4 h-4 text-red-600" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-red-600 font-semibold uppercase tracking-wide mb-0.5">Motivo Rechazo</p>
+                        <p className="text-sm font-bold text-red-900">{selectedImage.reason}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Información adicional simulada - MÁS COMPACTA */}
+              <div className="border-t border-neutral-200 dark:border-neutral-700 pt-5">
+                <h3 className="text-base font-bold text-neutral-900 dark:text-white mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                  Información Clínica
+                </h3>
+                <div className="space-y-2.5">
+                  <div className="flex items-start gap-2.5">
+                    <FaMapMarkerAlt className="w-3.5 h-3.5 text-neutral-400 dark:text-neutral-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">Localización:</p>
+                      <p className="text-xs text-neutral-600 dark:text-neutral-400 dark:text-neutral-500">Extremidad superior derecha, zona del antebrazo</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2.5">
+                    <FaStethoscope className="w-3.5 h-3.5 text-neutral-400 dark:text-neutral-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">Observaciones:</p>
+                      <p className="text-xs text-neutral-600 dark:text-neutral-400 dark:text-neutral-500">
+                        Lesión pigmentada con bordes irregulares. El modelo identifica características compatibles con {selectedImage.disease}.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Botones de acción según tipo */}
+              <div className="border-t border-neutral-200 dark:border-neutral-700 pt-5 mt-5">
+                {selectedImage.modalType === 'pending' && (
+                  <div className="grid md:grid-cols-3 gap-2.5">
+                    <button className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg bg-[#A8D32C] hover:bg-[#8ab824] text-white font-bold text-sm transition-all duration-200 hover:shadow-lg dark:hover:shadow-neutral-900/50">
+                      <FaCheckCircle className="w-4 h-4" />
+                      Aprobar
+                    </button>
+                    <button className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg bg-red-500 hover:bg-red-600 text-white font-bold text-sm transition-all duration-200 hover:shadow-lg dark:hover:shadow-neutral-900/50">
+                      <FaTimes className="w-4 h-4" />
+                      Rechazar
+                    </button>
+                    <button className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg bg-blue-500 hover:bg-blue-600 text-white font-bold text-sm transition-all duration-200 hover:shadow-lg dark:hover:shadow-neutral-900/50">
+                      <FaFileExport className="w-4 h-4" />
+                      Exportar
+                    </button>
+                  </div>
+                )}
+
+                {selectedImage.modalType === 'approved' && (
+                  <div>
+                    <div className="bg-[#A8D32C]/10 border-2 border-[#C5E86C] rounded-lg p-4 mb-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-10 h-10 rounded-full bg-[#A8D32C] flex items-center justify-center flex-shrink-0">
+                          <FaCheckCircle className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-[#6d9419] text-base" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                            Imagen Validada
+                          </h4>
+                          <p className="text-xs text-[#8ab824]">
+                            Aprobada por especialista médico
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <button className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-bold text-sm transition-all duration-200 text-white hover:shadow-lg dark:hover:shadow-neutral-900/50" style={{ backgroundColor: '#A8D32C' }}>
+                      <FaFileExport className="w-4 h-4" />
+                      Exportar para Reentrenamiento
+                    </button>
+                    <button className="w-full mt-2 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-300 font-semibold text-sm transition-all duration-200">
+                      <FaHistory className="w-4 h-4" />
+                      Ver Historial
+                    </button>
+                  </div>
+                )}
+
+                {selectedImage.modalType === 'rejected' && (
+                  <div>
+                    <div className="bg-red-50 border-2 border-red-200 rounded-lg p-4 mb-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center flex-shrink-0">
+                          <FaExclamationTriangle className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-red-900 text-base" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                            Imagen Rechazada
+                          </h4>
+                          <p className="text-xs text-red-700">
+                            {selectedImage.reason || 'No cumple criterios de calidad'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <button className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm transition-all duration-200 hover:shadow-lg dark:hover:shadow-neutral-900/50">
+                      <FaHistory className="w-4 h-4" />
+                      Revisar y Recargar
+                    </button>
+                    <button className="w-full mt-2 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-300 font-semibold text-sm transition-all duration-200">
+                      <FaFileExport className="w-4 h-4" />
+                      Ver Historial
+                    </button>
+                  </div>
+                )}
+              </div>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+    </div>
   );
 };
 

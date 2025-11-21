@@ -1,286 +1,212 @@
-import React, { useRef, useState, useCallback } from 'react';
-import Webcam from 'react-webcam';
-import { 
-  FaCamera, 
-  FaSync, 
-  FaCheck, 
-  FaRedo, 
-  FaVideo, 
-  FaLightbulb,
-  FaExpand,
-  FaCircle,
-  FaExclamationTriangle
-} from 'react-icons/fa';
+﻿import React, { useState, useRef, useEffect } from 'react';
+import { FaCamera, FaVideo, FaVideoSlash, FaCheckCircle, FaTimes, FaExclamationTriangle } from 'react-icons/fa';
 
 const WebcamCapture = ({ onCapture, disabled = false }) => {
-  const webcamRef = useRef(null);
-  const [isCapturing, setIsCapturing] = useState(false);
-  const [facingMode, setFacingMode] = useState('user');
-  const [lastCapture, setLastCapture] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const videoRef = useRef(null);
+  const [stream, setStream] = useState(null);
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [capturedImage, setCapturedImage] = useState(null);
+  const [error, setError] = useState(null);
 
-  const videoConstraints = {
-    facingMode: facingMode,
-    width: 1280,
-    height: 720
+  const startWebcam = async () => {
+    try {
+      setError(null);
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: { 
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          facingMode: 'environment'
+        }
+      });
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = mediaStream;
+      }
+      setStream(mediaStream);
+      setIsStreaming(true);
+    } catch (err) {
+      console.error('Error al acceder a la cámara:', err);
+      setError('No se pudo acceder a la cámara. Verifique los permisos.');
+    }
   };
 
-  const capture = useCallback(() => {
-    if (!webcamRef.current || disabled) return;
+  const stopWebcam = () => {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      setStream(null);
+      setIsStreaming(false);
+    }
+  };
 
-    setIsCapturing(true);
-    
-    // Pequeño delay para feedback visual
-    setTimeout(() => {
-      const imageSrc = webcamRef.current.getScreenshot();
-      setLastCapture(imageSrc);
-      
-      // Crear elemento imagen para procesamiento
-      const img = new Image();
-      img.onload = () => {
-        onCapture(img);
-        setIsCapturing(false);
-      };
-      img.onerror = () => {
-        console.error('Error loading captured image');
-        setIsCapturing(false);
-      };
-      img.src = imageSrc;
-    }, 200);
-  }, [webcamRef, onCapture, disabled]);
+  const captureImage = () => {
+    if (!videoRef.current) return;
 
-  const switchCamera = () => {
-    if (disabled) return;
-    setFacingMode(prev => prev === 'user' ? 'environment' : 'user');
-    setIsLoading(true);
+    const canvas = document.createElement('canvas');
+    canvas.width = videoRef.current.videoWidth;
+    canvas.height = videoRef.current.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(videoRef.current, 0, 0);
+
+    const imageData = canvas.toDataURL('image/jpeg', 0.95);
+    setCapturedImage(imageData);
+
+    const img = new Image();
+    img.onload = () => {
+      onCapture(img);
+    };
+    img.src = imageData;
+
+    stopWebcam();
   };
 
   const retakePhoto = () => {
-    setLastCapture(null);
+    setCapturedImage(null);
+    onCapture(null);
+    startWebcam();
   };
 
-  const handleVideoLoad = () => {
-    setIsLoading(false);
-  };
-
-  const handleVideoError = () => {
-    setIsLoading(false);
-    console.error('Error loading webcam');
-  };
+  useEffect(() => {
+    return () => {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [stream]);
 
   return (
-    <div className="space-y-6">
-      {/* Header Mejorado */}
-      <div className="flex justify-between items-center">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-gradient-to-r from-[#8C7FE9] to-[#342B7C] rounded-xl flex items-center justify-center">
-            <FaVideo className="text-white w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-[#342B7C] font-serif">
-              Captura en Tiempo Real
-            </h3>
-            <p className="text-[#342B7C]/60 text-sm">
-              {facingMode === 'user' ? 'Cámara frontal' : 'Cámara trasera'}
-            </p>
-          </div>
-        </div>
-
-        <button
-          onClick={switchCamera}
-          disabled={disabled}
-          className={`
-            flex items-center space-x-2 px-4 py-2 rounded-xl font-medium transition-all duration-300
-            ${disabled 
-              ? 'bg-[#342B7C]/20 text-[#342B7C]/40 cursor-not-allowed' 
-              : 'bg-gradient-to-r from-[#8C7FE9] to-[#342B7C] text-white hover:shadow-lg transform hover:scale-105'
-            }
-          `}
-        >
-          <FaSync className="w-4 h-4" />
-          <span className="text-sm">
-            {facingMode === 'user' ? 'Trasera' : 'Frontal'}
-          </span>
-        </button>
-      </div>
-
-      {/* Webcam o Preview */}
-      {!lastCapture ? (
-        <div className="relative bg-gradient-to-br from-[#FDEEFD] to-[#D8DFF9] rounded-2xl p-2 border border-[#8C7FE9]/20">
-          {isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center z-10 bg-white/80 backdrop-blur-sm rounded-xl">
-              <div className="text-center">
-                <div className="relative mb-3">
-                  <div className="w-12 h-12 bg-gradient-to-r from-[#8C7FE9] to-[#342B7C] rounded-2xl animate-spin">
-                    <div className="absolute inset-2 bg-white rounded-lg"></div>
-                  </div>
-                  <FaCamera className="w-5 h-5 text-[#342B7C] absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+    <div className="space-y-4">
+      {/* Área de video/captura */}
+      <div className="relative bg-neutral-900 rounded-xl overflow-hidden border border-neutral-200 dark:border-neutral-700 shadow-lg">
+        {!capturedImage ? (
+          <div className="relative aspect-video">
+            {isStreaming ? (
+              <>
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  className="w-full h-full object-cover"
+                />
+                
+                {/* Overlay guía */}
+                <div className="absolute inset-0 pointer-events-none">
+                  <div className="absolute inset-0 border-4 border-[#A8D32C]/30 m-12 rounded-lg"></div>
+                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-48 h-48 border-2 border-[#A8D32C]/50 rounded-full"></div>
                 </div>
-                <p className="text-[#342B7C] font-medium">Inicializando cámara...</p>
+
+                {/* Indicador de transmisión */}
+                <div className="absolute top-4 left-4 flex items-center gap-2 bg-red-500 text-white px-3 py-1.5 rounded-lg shadow-lg">
+                  <div className="w-2 h-2 bg-white dark:bg-neutral-900 rounded-full animate-pulse"></div>
+                  <span className="text-xs font-bold">EN VIVO</span>
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center justify-center h-full bg-neutral-800 text-neutral-400 dark:text-neutral-500">
+                <div className="text-center p-8">
+                  <FaCamera className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                  <p className="text-lg font-semibold">Cámara no iniciada</p>
+                  <p className="text-sm mt-2 opacity-75">Haga clic en iniciar cámara</p>
+                </div>
               </div>
-            </div>
-          )}
-
-          <div className="relative rounded-xl overflow-hidden">
-            <Webcam
-              audio={false}
-              ref={webcamRef}
-              screenshotFormat="image/jpeg"
-              videoConstraints={videoConstraints}
-              onUserMedia={handleVideoLoad}
-              onUserMediaError={handleVideoError}
-              className="w-full h-64 object-cover rounded-xl shadow-lg transition-all duration-500"
-              style={{ 
-                filter: isCapturing ? 'brightness(0.8)' : 'brightness(1)',
-                transform: isCapturing ? 'scale(1.02)' : 'scale(1)'
-              }}
-            />
-            
-            {/* Overlay de Guía Mejorado */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-48 h-48 border-2 border-white/80 border-dashed rounded-xl opacity-70 shadow-2xl"></div>
-            </div>
-
-            {/* Indicador de Estado */}
-            <div className="absolute top-3 left-3 flex items-center space-x-2 bg-black/60 backdrop-blur-sm text-white text-xs px-3 py-1.5 rounded-full">
-              <div className={`w-2 h-2 rounded-full ${isLoading ? 'bg-yellow-400' : 'bg-green-400'} animate-pulse`}></div>
-              <span>{isLoading ? 'Conectando...' : 'Cámara activa'}</span>
-            </div>
-
-            {/* Efecto de Captura */}
-            {isCapturing && (
-              <div className="absolute inset-0 bg-white animate-ping opacity-30 rounded-xl"></div>
             )}
           </div>
-        </div>
-      ) : (
-        <div className="relative bg-gradient-to-br from-[#FDEEFD] to-[#D8DFF9] rounded-2xl p-2 border border-[#8C7FE9]/20">
-          <div className="relative rounded-xl overflow-hidden">
+        ) : (
+          <div className="relative aspect-video">
             <img
-              src={lastCapture}
-              alt="Captura dermatológica"
-              className="w-full h-64 object-cover rounded-xl shadow-2xl transition-all duration-500"
+              src={capturedImage}
+              alt="Captura"
+              className="w-full h-full object-cover"
             />
-            
-            {/* Badge de Estado Mejorado */}
-            <div className="absolute top-3 right-3 bg-gradient-to-r from-[#8C7FE9] to-[#342B7C] text-white text-xs px-3 py-1.5 rounded-full font-semibold shadow-lg backdrop-blur-sm">
-              <div className="flex items-center space-x-1">
-                <FaCheck className="w-3 h-3" />
-                <span>Captura exitosa</span>
+            <div className="absolute top-4 right-4 bg-[#A8D32C]/100 text-white px-3 py-1.5 rounded-lg shadow-lg">
+              <div className="flex items-center gap-2">
+                <FaCheckCircle className="w-4 h-4" />
+                <span className="text-xs font-bold">CAPTURADA</span>
               </div>
             </div>
-
-            {/* Overlay de Información */}
-            <div className="absolute bottom-3 left-3 right-3 bg-black/70 backdrop-blur-sm text-white text-xs p-3 rounded-lg">
-              <p className="font-medium">Imagen lista para análisis</p>
-              <p className="text-white/70 mt-1">Resolución: 1280×720 px</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Botones de Control Mejorados */}
-      <div className="flex justify-center space-x-4">
-        {!lastCapture ? (
-          <button
-            onClick={capture}
-            disabled={disabled || isLoading}
-            className={`
-              relative p-5 rounded-2xl shadow-2xl transition-all duration-300 transform
-              ${disabled || isLoading
-                ? 'bg-[#342B7C]/20 cursor-not-allowed scale-95' 
-                : 'bg-gradient-to-r from-[#C19CFF] to-[#8C7FE9] hover:shadow-3xl hover:scale-110 active:scale-105'
-              }
-            `}
-          >
-            <div className="relative">
-              <FaCircle className={`w-8 h-8 ${disabled || isLoading ? 'text-[#342B7C]/40' : 'text-white'}`} />
-              {isCapturing && (
-                <div className="absolute inset-0 bg-white rounded-full animate-ping"></div>
-              )}
-            </div>
-            
-            {/* Efecto de brillo en hover */}
-            <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-white/0 via-white/20 to-white/0 opacity-0 hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
-          </button>
-        ) : (
-          <div className="flex space-x-3 w-full">
-            <button
-              onClick={retakePhoto}
-              disabled={disabled}
-              className={`
-                flex-1 flex items-center justify-center space-x-2 py-4 px-6 rounded-xl font-semibold transition-all duration-300
-                ${disabled 
-                  ? 'bg-[#342B7C]/20 text-[#342B7C]/40 cursor-not-allowed' 
-                  : 'bg-white text-[#342B7C] border border-[#342B7C]/20 hover:bg-[#342B7C] hover:text-white hover:shadow-lg transform hover:scale-105'
-                }
-              `}
-            >
-              <FaRedo className="w-4 h-4" />
-              <span>Volver a tomar</span>
-            </button>
-            <button
-              onClick={() => {
-                const img = new Image();
-                img.src = lastCapture;
-                onCapture(img);
-              }}
-              disabled={disabled}
-              className={`
-                flex-1 flex items-center justify-center space-x-2 py-4 px-6 rounded-xl font-semibold transition-all duration-300
-                ${disabled 
-                  ? 'bg-[#342B7C]/20 text-[#342B7C]/40 cursor-not-allowed' 
-                  : 'bg-gradient-to-r from-[#8C7FE9] to-[#342B7C] text-white hover:shadow-lg transform hover:scale-105'
-                }
-              `}
-            >
-              <FaCheck className="w-4 h-4" />
-              <span>Usar esta foto</span>
-            </button>
           </div>
         )}
       </div>
 
-      {/* Panel de Instrucciones Mejorado */}
-      <div className="bg-gradient-to-br from-[#FDEEFD] to-[#D8DFF9] rounded-2xl p-5 border border-[#8C7FE9]/20 backdrop-blur-sm">
-        <div className="flex items-center space-x-3 mb-3">
-          <div className="w-10 h-10 bg-gradient-to-r from-[#8C7FE9] to-[#342B7C] rounded-xl flex items-center justify-center">
-            <FaLightbulb className="text-white w-4 h-4" />
-          </div>
-          <h4 className="text-sm font-semibold text-[#342B7C]">
-            📸 Consejos para Captura Óptima
-          </h4>
-        </div>
-        
-        <div className="grid md:grid-cols-2 gap-3 text-sm">
-          <div className="flex items-start space-x-2">
-            <div className="w-1.5 h-1.5 bg-[#C19CFF] rounded-full mt-1.5 flex-shrink-0"></div>
-            <span className="text-[#342B7C]/80">Mantenga la cámara estable y enfocada</span>
-          </div>
-          <div className="flex items-start space-x-2">
-            <div className="w-1.5 h-1.5 bg-[#C19CFF] rounded-full mt-1.5 flex-shrink-0"></div>
-            <span className="text-[#342B7C]/80">Use buena iluminación natural</span>
-          </div>
-          <div className="flex items-start space-x-2">
-            <div className="w-1.5 h-1.5 bg-[#C19CFF] rounded-full mt-1.5 flex-shrink-0"></div>
-            <span className="text-[#342B7C]/80">Acérquese para ver detalles claros</span>
-          </div>
-          <div className="flex items-start space-x-2">
-            <div className="w-1.5 h-1.5 bg-[#C19CFF] rounded-full mt-1.5 flex-shrink-0"></div>
-            <span className="text-[#342B7C]/80">Evite sombras sobre el área</span>
+      {/* Error */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex items-center gap-3">
+            <FaExclamationTriangle className="w-5 h-5 text-red-600 flex-shrink-0" />
+            <p className="text-sm text-red-700 font-medium">{error}</p>
           </div>
         </div>
+      )}
+
+      {/* Controles */}
+      <div className="flex gap-3">
+        {!isStreaming && !capturedImage && (
+          <button
+            onClick={startWebcam}
+            disabled={disabled}
+            className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-lg font-semibold text-sm text-white transition-all duration-200 hover:shadow-lg dark:hover:shadow-neutral-900/50 disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ backgroundColor: '#A8D32C' }}
+          >
+            <FaVideo className="w-4 h-4" />
+            Iniciar Cámara
+          </button>
+        )}
+
+        {isStreaming && !capturedImage && (
+          <>
+            <button
+              onClick={captureImage}
+              disabled={disabled}
+              className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-lg font-semibold text-sm text-white transition-all duration-200 hover:shadow-lg dark:hover:shadow-neutral-900/50 disabled:opacity-50"
+              style={{ backgroundColor: '#A8D32C' }}
+            >
+              <FaCamera className="w-4 h-4" />
+              Capturar Imagen
+            </button>
+            
+            <button
+              onClick={stopWebcam}
+              className="flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-red-500 hover:bg-red-600 text-white font-semibold text-sm transition-all duration-200"
+            >
+              <FaVideoSlash className="w-4 h-4" />
+              Detener
+            </button>
+          </>
+        )}
+
+        {capturedImage && (
+          <>
+            <button
+              onClick={retakePhoto}
+              disabled={disabled}
+              className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-300 font-semibold text-sm transition-all duration-200 disabled:opacity-50"
+            >
+              <FaCamera className="w-4 h-4" />
+              Tomar Otra Foto
+            </button>
+            
+            <button
+              onClick={() => {
+                setCapturedImage(null);
+                onCapture(null);
+              }}
+              className="flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-red-500 hover:bg-red-600 text-white font-semibold text-sm transition-all duration-200"
+            >
+              <FaTimes className="w-4 h-4" />
+              Descartar
+            </button>
+          </>
+        )}
       </div>
 
-      {/* Advertencia de Permisos */}
-      {!isLoading && !webcamRef.current?.stream && (
-        <div className="bg-gradient-to-r from-[#FDEEFD] to-[#D8DFF9] border border-[#C19CFF]/30 rounded-xl p-4">
-          <div className="flex items-center space-x-3">
-            <FaExclamationTriangle className="w-5 h-5 text-[#8C7FE9] flex-shrink-0" />
+      {/* Información */}
+      {!capturedImage && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <FaCamera className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-[#342B7C] font-medium text-sm">Permisos de cámara requeridos</p>
-              <p className="text-[#342B7C]/70 text-xs mt-1">
-                Por favor, permita el acceso a la cámara para usar esta función
+              <p className="text-sm text-neutral-700 dark:text-neutral-300">
+                <strong className="font-semibold">Consejos para la captura:</strong> Centre la lesión en el círculo guía. 
+                Asegúrese de tener buena iluminación y que la imagen esté enfocada antes de capturar.
               </p>
             </div>
           </div>

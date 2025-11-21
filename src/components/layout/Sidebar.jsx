@@ -1,318 +1,370 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useTheme } from '../../contexts/ThemeContext';
+import { useAuth } from '../../contexts/useAuth';
+import LoginModal from '../auth/LoginModal';
 import { 
   FaHome, 
   FaDisease, 
   FaCamera, 
   FaInfoCircle, 
   FaTimes,
-  FaClinicMedical,
-  FaBrain,
-  FaBookMedical,
-  FaChevronRight,
   FaImages,
   FaSyncAlt,
-  FaChartLine
+  FaCog,
+  FaUserMd,
+  FaShieldAlt,
+  FaCheckCircle,
+  FaBell,
+  FaMicroscope,
+  FaHeartbeat,
+  FaClipboardCheck,
+  FaMoon,
+  FaSun,
+  FaSignInAlt,
+  FaSignOutAlt
 } from 'react-icons/fa';
 
-const Sidebar = ({ isOpen, onClose, onStateChange }) => {
-  const [isCollapsed, setIsCollapsed] = useState(true);
-  const [isHovered, setIsHovered] = useState(false);
-  const [mouseInSidebar, setMouseInSidebar] = useState(false);
-  const [activeItem, setActiveItem] = useState('');
+const Sidebar = ({ isOpen, onClose }) => {
   const location = useLocation();
+  const { isDark, toggleTheme } = useTheme();
+  const { isAuthenticated, user, logout } = useAuth();
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
-  // Paleta de colores profesional (por si la reutilizas)
-  const colors = {
-    primary: '#342B7C',
-    secondary: '#8C7FE9',
-    accent: '#C19CFF',
-    background: '#FDEEFD',
-    lightBg: '#D8DFF9',
-    text: '#1A1A2E'
-  };
-
-  // Notificar al layout sobre cambios de estado
-  useEffect(() => {
-    if (onStateChange) onStateChange(isCollapsed, isHovered);
-  }, [isCollapsed, isHovered, onStateChange]);
-
-  const handleLinkClick = (itemName) => {
-    setActiveItem(itemName);
+  const handleLinkClick = () => {
     if (window.innerWidth < 1024) {
       onClose();
-      setIsCollapsed(true);
-      setIsHovered(false);
     }
   };
 
   const menuItems = [
     { 
       name: 'Inicio', 
-      icon: <FaHome className="w-4 h-4 transition-transform duration-300 group-hover:scale-110" />, 
+      icon: <FaHome className="w-5 h-5" />, 
       path: '/',
-      description: 'Página principal'
+      badge: null,
+      requiresAuth: false
     },
     { 
       name: 'Enfermedades', 
-      icon: <FaDisease className="w-4 h-4 transition-transform duration-300 group-hover:scale-110" />, 
+      icon: <FaMicroscope className="w-5 h-5" />, 
       path: '/enfermedades',
-      description: 'Catálogo completo'
+      badge: '10',
+      requiresAuth: false
     },
     { 
-      name: 'Predicción en Vivo', 
-      icon: <FaCamera className="w-4 h-4 transition-transform duration-300 group-hover:scale-110" />, 
+      name: 'Diagnóstico IA', 
+      icon: <FaClipboardCheck className="w-5 h-5" />, 
       path: '/prediccion',
-      description: 'Análisis IA'
+      badge: null,
+      requiresAuth: false
     },
     { 
-      name: 'Analizar Imágenes', 
-      icon: <FaImages className="w-4 h-4 transition-transform duration-300 group-hover:scale-110" />, 
+      name: 'Analizar', 
+      icon: <FaImages className="w-5 h-5" />, 
       path: '/analizar',
-      description: 'Procesar imágenes'
+      badge: 'NUEVO',
+      badgeColor: 'red',
+      requiresAuth: true // Solo visible si está autenticado
     },
     { 
-      name: 'Reentrenar IA', 
-      icon: <FaSyncAlt className="w-4 h-4 transition-transform duration-300 group-hover:scale-110" />, 
+      name: 'Reentrenar', 
+      icon: <FaSyncAlt className="w-5 h-5" />, 
       path: '/reentrenar',
-      description: 'Optimizar modelo'
+      badge: null,
+      requiresAuth: true // Solo visible si está autenticado
     },
     { 
-      name: 'Acerca de', 
-      icon: <FaInfoCircle className="w-4 h-4 transition-transform duration-300 group-hover:scale-110" />, 
+      name: 'Nosotros', 
+      icon: <FaInfoCircle className="w-5 h-5" />, 
       path: '/nosotros',
-      description: 'Sobre nosotros'
+      badge: null,
+      requiresAuth: false
     },
   ];
 
-  // Colapso al salir el mouse
-  useEffect(() => {
-    if (!mouseInSidebar && isHovered) {
-      const timer = setTimeout(() => setIsHovered(false), 200);
-      return () => clearTimeout(timer);
-    }
-  }, [mouseInSidebar, isHovered]);
-
-  // Responsivo
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 1024) {
-        setIsCollapsed(!isOpen);
-        setIsHovered(false);
-      } else {
-        setIsCollapsed(true);
-        setIsHovered(false);
-      }
-    };
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [isOpen]);
-
-  const sidebarWidth = isCollapsed && !isHovered ? 'w-16' : 'w-64';
-  const isExpanded = !isCollapsed || isHovered;
-
-  const handleMouseEnter = () => {
-    setMouseInSidebar(true);
-    if (window.innerWidth >= 1024 && isCollapsed) setIsHovered(true);
-  };
-  const handleMouseLeave = () => setMouseInSidebar(false);
-
-  const getIconAnimation = (itemName) =>
-    activeItem === itemName ? 'animate-pulse-scale' : '';
+  // Filtrar items según autenticación
+  const visibleMenuItems = menuItems.filter(item => !item.requiresAuth || isAuthenticated);
 
   return (
     <>
-      {/* Overlay Profesional */}
+      {/* Overlay Mobile */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-gray-900 bg-opacity-60 backdrop-blur-md z-40 lg:hidden animate-fadeIn"
+          className="fixed inset-0 bg-neutral-900/60 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-300"
           onClick={onClose}
         />
       )}
       
-      {/* Sidebar Corporativo Mejorado */}
+      {/* Sidebar */}
       <aside 
         className={`
-          fixed top-0 left-0 h-full bg-gradient-to-br from-[#FDEEFD] to-[#D8DFF9] shadow-2xl z-50 
-          transform transition-all duration-500 ease-in-out
-          border-r border-[#8C7FE9]/20
+          fixed top-0 left-0 h-screen shadow-xl dark:shadow-neutral-900/50 z-50 
+          transform transition-all duration-300 ease-in-out
+          border-r
+          ${isDark 
+            ? 'bg-neutral-900 border-neutral-800' 
+            : 'bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700'
+          }
           ${isOpen ? 'translate-x-0' : '-translate-x-full'} 
           lg:translate-x-0 
-          ${sidebarWidth}
-          overflow-hidden
+          w-64
+          flex flex-col
         `}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
       >
-        {/* Header Corporativo Compacto */}
-        <div className="p-3 border-b border-[#8C7FE9]/20 bg-white/50 backdrop-blur-sm">
+        {/* Barra verde superior */}
+        <div className="h-0.5 bg-[#A8D32C] flex-shrink-0"></div>
+
+        {/* Header con Logo */}
+        <div className={`p-3 border-b flex-shrink-0 ${isDark ? 'border-neutral-800' : 'border-neutral-100 dark:border-neutral-800'}`}>
           <div className="flex items-center justify-between">
             <Link 
               to="/" 
-              onClick={() => handleLinkClick('Inicio')}
-              className={`flex items-center transition-all duration-300 ${
-                isExpanded ? 'space-x-2' : 'justify-center'
-              }`}
+              onClick={handleLinkClick}
+              className="flex items-center space-x-3 transition-all duration-300"
             >
-              <div className="relative group">
-                <div className="w-10 h-10 bg-gradient-to-br from-[#342B7C] to-[#8C7FE9] rounded-lg flex items-center justify-center shadow-lg transition-all duration-300 group-hover:shadow-xl group-hover:scale-105">
-                  <FaClinicMedical className="text-white text-sm transition-transform duration-300 group-hover:scale-110" />
+              <div className="relative flex-shrink-0">
+                <div className="w-9 h-9 rounded-xl bg-white dark:bg-neutral-900 border-2 border-[#C5E86C] flex items-center justify-center shadow-sm hover:shadow-md hover:border-primary-300 transition-all duration-300">
+                  <img 
+                    src="/logo.png" 
+                    alt="DermApp" 
+                    className="w-6 h-6 object-contain"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.nextElementSibling.classList.remove('hidden');
+                      e.target.nextElementSibling.classList.add('flex');
+                    }}
+                  />
+                  <svg 
+                    className="w-5 h-5 text-[#A8D32C] hidden items-center justify-center" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                      strokeWidth={2} 
+                      d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" 
+                    />
+                  </svg>
+                  
+                  {/* Badge de verificación */}
+                  <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-[#A8D32C] rounded-full border-2 border-white flex items-center justify-center">
+                    <svg className="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
                 </div>
-                <div className="absolute -inset-1 bg-gradient-to-r from-[#342B7C] to-[#C19CFF] rounded-lg opacity-0 group-hover:opacity-20 blur-sm transition-opacity duration-300"></div>
               </div>
               
-              {isExpanded && (
-                <div className="flex-1 min-w-0">
-                  <h2 className="text-base font-bold text-[#342B7C] font-sans tracking-tight truncate">DermApp</h2>
-                  <p className="text-xs text-[#8C7FE9] font-medium truncate">Diagnóstico IA</p>
-                </div>
-              )}
+              <div className="flex flex-col min-w-0">
+                <h2 className={`text-sm font-bold tracking-tight truncate ${isDark ? 'text-white' : 'text-neutral-900 dark:text-white'}`} style={{ fontFamily: 'Poppins, sans-serif' }}>DermApp</h2>
+                <p className={`text-[10px] font-medium truncate ${isDark ? 'text-neutral-400 dark:text-neutral-500' : 'text-neutral-500 dark:text-neutral-400 dark:text-neutral-500'}`} style={{ fontFamily: 'Inter, sans-serif' }}>Clinical Solutions</p>
+              </div>
             </Link>
             
-            {/* Botón cerrar solo para móvil */}
+            {/* Botón de Modo Oscuro */}
+            <button
+              onClick={toggleTheme}
+              className={`p-2 rounded-lg transition-all duration-300 ${
+                isDark 
+                  ? 'bg-neutral-800 hover:bg-neutral-700 text-yellow-400' 
+                  : 'bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-300'
+              }`}
+              title={isDark ? 'Modo Claro' : 'Modo Oscuro'}
+            >
+              {isDark ? (
+                <FaSun className="w-4 h-4" />
+              ) : (
+                <FaMoon className="w-4 h-4" />
+              )}
+            </button>
+            
+            {/* Botón cerrar móvil */}
             <button 
               onClick={onClose}
-              className="lg:hidden p-1.5 rounded-lg bg-[#8C7FE9]/10 hover:bg-[#8C7FE9]/20 text-[#342B7C] transition-all duration-300 hover:scale-110"
+              className={`lg:hidden p-2 rounded-lg transition-all duration-200 ${
+                isDark ? 'hover:bg-neutral-800 text-neutral-400 dark:text-neutral-500' : 'hover:bg-neutral-100 dark:hover:bg-neutral-800 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 dark:text-neutral-500'
+              }`}
             >
-              <FaTimes className="w-3 h-3" />
+              <FaTimes className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        {/* Navegación Corporativa Compacta (↓ aquí bajamos el inicio) */}
-        <nav className="p-3 pt-8 md:pt-10 lg:pt-12 space-y-1 flex-1 overflow-y-auto">
-          {menuItems.map((item) => (
+        {/* Navegación Principal */}
+        <nav className="p-3 pt-4 space-y-1.5 flex-1 min-h-0">
+          {visibleMenuItems.map((item) => (
             <Link
               key={item.name}
               to={item.path}
-              onClick={() => handleLinkClick(item.name)}
+              onClick={handleLinkClick}
               className={`
-                flex items-center transition-all duration-300 group relative
-                ${isExpanded ? 'p-2 rounded-lg space-x-2' : 'p-1.5 rounded-md justify-center'}
+                flex items-center px-3 py-2 rounded-xl transition-all duration-200 group relative
                 ${location.pathname === item.path 
-                  ? 'bg-[#8C7FE9] text-white shadow-md' 
-                  : 'text-[#342B7C] hover:bg-[#8C7FE9]/10 hover:text-[#342B7C]'}
-                border border-transparent hover:border-[#8C7FE9]/30
-                transform hover:translate-x-1
+                  ? 'bg-[#A8D32C] text-white shadow-md' 
+                  : isDark 
+                    ? 'text-neutral-300 hover:bg-[#A8D32C]/20 hover:text-[#A8D32C]'
+                    : 'text-neutral-700 dark:text-neutral-300 hover:bg-[#A8D32C]/10 hover:text-[#8ab824]'}
               `}
-              title={isExpanded ? '' : item.name}
             >
-              {/* Indicador de estado activo */}
+              {/* Indicador activo */}
               {location.pathname === item.path && (
-                <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-6 bg-[#C19CFF] rounded-r-full"></div>
+                <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-7 bg-primary-400 rounded-r-full"></div>
               )}
               
-              <div className={`
-                transition-all duration-300 flex items-center justify-center relative
-                ${location.pathname === item.path 
-                  ? 'bg-white/20' 
-                  : 'bg-[#8C7FE9]/10 group-hover:bg-[#8C7FE9]/20'}
-                ${isExpanded ? 'p-1.5 rounded-md w-8 h-8' : 'p-1 rounded w-7 h-7'}
-                ${getIconAnimation(item.name)}
-                group-hover:scale-105
-              `}>
+              <div className="flex-shrink-0">
                 {item.icon}
-                <div className="absolute inset-0 rounded-md bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </div>
               
-              {isExpanded && (
-                <div className="flex-1 min-w-0 transition-all duration-300">
-                  <span className="font-semibold block text-sm transition-transform duration-300 group-hover:translate-x-0.5">
-                    {item.name}
-                  </span>
-                  <span className="text-xs text-[#8C7FE9] group-hover:text-[#342B7C] transition-colors duration-300 block truncate">
-                    {item.description}
-                  </span>
-                </div>
-              )}
+              <span className="ml-3 text-xs font-semibold truncate flex-1" style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '0.01em' }}>
+                {item.name}
+              </span>
 
-              {isExpanded && (
-                <div className="opacity-0 group-hover:opacity-100 transform -translate-x-1 group-hover:translate-x-0 transition-all duration-300">
-                  <FaChevronRight className="w-2 h-2 text-[#C19CFF]" />
-                </div>
+              {item.badge && (
+                <span className={`
+                  ml-auto flex-shrink-0 px-2 py-0.5 text-[9px] font-bold rounded-lg
+                  ${item.badgeColor === 'red'
+                    ? 'bg-red-500 text-white animate-pulse'
+                    : location.pathname === item.path 
+                      ? 'bg-white dark:bg-neutral-900/20 text-white' 
+                      : 'bg-[#C5E86C]/20 text-[#8ab824] border border-[#C5E86C]'}
+                `} style={{ fontFamily: 'Poppins, sans-serif' }}>
+                  {item.badge}
+                </span>
               )}
             </Link>
           ))}
         </nav>
 
-        {/* Sección de Estado del Sistema - Solo expandido */}
-        {isExpanded && (
-          <div className="p-3 border-t border-[#8C7FE9]/20 bg-white/30 backdrop-blur-sm">
-            <div className="bg-white/50 rounded-lg p-2 border border-[#8C7FE9]/10">
-              <div className="flex items-center space-x-2 mb-1.5">
-                <div className="p-1 bg-gradient-to-r from-[#342B7C] to-[#8C7FE9] rounded-md">
-                  <FaBrain className="text-white text-xs" />
+        {/* Sección de Notificaciones */}
+        <div className="p-2.5 border-t border-neutral-100 dark:border-neutral-800 flex-shrink-0">
+          <div className="bg-white dark:bg-neutral-900 border-2 border-[#C5E86C] rounded-xl p-2.5 shadow-sm hover:shadow-md hover:border-primary-300 transition-all duration-300 cursor-pointer">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <div className="relative">
+                  <div className="p-1.5 bg-[#A8D32C] rounded-lg shadow-sm">
+                    <FaBell className="text-white text-sm" />
+                  </div>
+                  {/* Indicador de notificaciones pendientes - Dinámico */}
+                  {/* {notificationCount > 0 && (
+                    <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full border-2 border-white flex items-center justify-center">
+                      <span className="text-white text-[8px] font-bold">{notificationCount}</span>
+                    </div>
+                  )} */}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-[#342B7C] font-semibold text-xs">IA Activa</h3>
-                  <p className="text-[#8C7FE9] text-xs truncate">Sistema operativo</p>
-                </div>
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-[#342B7C] font-medium">Rendimiento</span>
-                <div className="flex items-center space-x-1">
-                  <FaChartLine className="text-[#8C7FE9] w-2 h-2" />
-                  <span className="text-[#342B7C] font-bold">98%</span>
+                  <h3 className="text-neutral-900 dark:text-white font-bold text-[10px]" style={{ fontFamily: 'Poppins, sans-serif' }}>Notificaciones</h3>
+                  <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-500 text-[9px] font-medium" style={{ fontFamily: 'Inter, sans-serif' }}>Sin notificaciones</p>
+                  {/* Mostrar dinámicamente: {notificationCount} nueva{notificationCount !== 1 ? 's' : ''} */}
                 </div>
               </div>
             </div>
-          </div>
-        )}
-
-        {/* Footer Compacto - Solo expandido */}
-        {isExpanded && (
-          <div className="p-3 border-t border-[#8C7FE9]/20 bg-white/40 backdrop-blur-sm">
-            <div className="text-center">
-              <div className="flex items-center justify-center space-x-1.5 mb-1">
-                <FaBookMedical className="text-[#342B7C] text-xs" />
-                <p className="text-[#342B7C] font-bold text-xs">DermApp Pro</p>
-              </div>
-              <p className="text-[#8C7FE9] text-xs font-medium tracking-tight">
-                v2.1 Corporativo
-              </p>
-              <div className="flex justify-center space-x-1 mt-1.5">
-                {[1, 2, 3].map((dot) => (
-                  <div 
-                    key={dot}
-                    className="w-1 h-1 bg-[#8C7FE9] rounded-full opacity-40"
-                  ></div>
+            
+            {/* Lista de notificaciones - Renderizar dinámicamente */}
+            {/* {notifications.length > 0 && (
+              <div className="space-y-1.5 mt-2">
+                {notifications.slice(0, 1).map((notification, index) => (
+                  <div key={index} className="flex items-start space-x-1.5 p-1.5 bg-[#A8D32C]/10 rounded-lg border border-primary-100">
+                    <FaHeartbeat className="text-[#A8D32C] text-[9px] flex-shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-neutral-700 dark:text-neutral-300 text-[9px] font-semibold leading-tight" style={{ fontFamily: 'Inter, sans-serif' }}>{notification.message}</p>
+                      <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-500 text-[8px] mt-0.5">{notification.time}</p>
+                    </div>
+                  </div>
                 ))}
               </div>
-            </div>
+            )} */}
           </div>
-        )}
+        </div>
 
-        {/* Indicador de Colapso Elegante */}
-        {isCollapsed && !isHovered && (
-          <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2">
-            <div className="w-5 h-5 bg-[#8C7FE9]/20 rounded-full flex items-center justify-center group hover:bg-[#8C7FE9]/30 transition-colors duration-300">
-              <FaChevronRight className="text-[#342B7C] w-2 h-2 transition-transform duration-300 group-hover:scale-110" />
+        {/* Sección de Estado del Sistema */}
+        <div className={`p-2.5 border-t flex-shrink-0 ${isDark ? 'border-neutral-800' : 'border-neutral-100 dark:border-neutral-800'}`}>
+          <div className={`rounded-xl p-2.5 shadow-sm hover:shadow-md transition-all duration-300 border-2 ${
+            isDark 
+              ? 'bg-neutral-800 border-neutral-700 hover:border-[#A8D32C]/50' 
+              : 'bg-white dark:bg-neutral-900 border-[#C5E86C] hover:border-primary-300'
+          }`}>
+            <div className="flex items-center space-x-2 mb-2">
+              <div className="p-1.5 bg-[#A8D32C] rounded-lg shadow-sm">
+                <FaShieldAlt className="text-white text-xs animate-pulse" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className={`font-bold text-[10px] ${isDark ? 'text-white' : 'text-neutral-900 dark:text-white'}`} style={{ fontFamily: 'Poppins, sans-serif' }}>Sistema IA</h3>
+                <p className="text-[#A8D32C] text-[9px] font-medium" style={{ fontFamily: 'Inter, sans-serif' }}>Activo y operativo</p>
+              </div>
+              <FaCheckCircle className="text-[#A8D32C] w-3.5 h-3.5 flex-shrink-0" />
+            </div>
+            
+            <div className="flex items-center justify-between text-[9px] mb-1.5" style={{ fontFamily: 'Inter, sans-serif' }}>
+              <span className={`font-medium ${isDark ? 'text-neutral-400 dark:text-neutral-500' : 'text-neutral-600 dark:text-neutral-400 dark:text-neutral-500'}`}>Precisión</span>
+              <span className="text-[#A8D32C] font-bold text-[10px]">90%</span>
+            </div>
+            
+            <div className="w-full bg-[#C5E86C]/20 rounded-full h-1.5 relative overflow-hidden border border-[#C5E86C]">
+              <div className="bg-[#A8D32C] h-1.5 rounded-full transition-all duration-1000" style={{width: '90%'}}></div>
+              <div className="absolute inset-0 bg-white dark:bg-neutral-900/30 animate-shimmer"></div>
             </div>
           </div>
-        )}
+        </div>
+
+        {/* Card de Usuario Profesional / Botón Ingresar */}
+        <div className={`p-2.5 border-t flex-shrink-0 ${isDark ? 'border-neutral-800' : 'border-neutral-100 dark:border-neutral-800'}`}>
+          {isAuthenticated ? (
+            // Usuario autenticado - Mostrar perfil
+            <div className={`flex items-center space-x-2.5 p-2.5 rounded-xl border-2 transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md group ${
+              isDark 
+                ? 'bg-neutral-800 border-neutral-700 hover:bg-neutral-700 hover:border-[#A8D32C]/50' 
+                : 'bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700 hover:bg-[#A8D32C]/10 hover:border-[#C5E86C]'
+            }`}
+            onClick={logout}>
+              <div className="w-8 h-8 rounded-lg bg-[#A8D32C] border-2 border-[#A8D32C] flex items-center justify-center flex-shrink-0 shadow-md group-hover:shadow-lg dark:hover:shadow-neutral-900/50 transition-shadow duration-300">
+                <FaUserMd className="text-white text-sm" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className={`text-xs font-bold truncate ${isDark ? 'text-white' : 'text-neutral-900 dark:text-white'}`} style={{ fontFamily: 'Poppins, sans-serif' }}>
+                  Dr. {user?.name}
+                </p>
+                <p className={`text-[10px] truncate ${isDark ? 'text-neutral-400 dark:text-neutral-500' : 'text-neutral-500 dark:text-neutral-400 dark:text-neutral-500'}`} style={{ fontFamily: 'Inter, sans-serif' }}>
+                  {user?.role}
+                </p>
+              </div>
+              <FaSignOutAlt className="text-neutral-400 dark:text-neutral-500 group-hover:text-red-500 w-3.5 h-3.5 flex-shrink-0 transition-all duration-300" />
+            </div>
+          ) : (
+            // No autenticado - Mostrar botón Ingresar
+            <button
+              onClick={() => setShowLoginModal(true)}
+              className={`w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-xl font-bold transition-all duration-300 ${
+                isDark
+                  ? 'bg-[#A8D32C] hover:bg-[#8ab824] text-white'
+                  : 'bg-gradient-to-r from-[#A8D32C] to-[#8ab824] hover:shadow-lg text-white'
+              }`}
+              style={{ fontFamily: 'Poppins, sans-serif' }}
+            >
+              <FaSignInAlt className="w-4 h-4" />
+              <span>Ingresar</span>
+            </button>
+          )}
+        </div>
+
+        {/* Footer Info */}
+        <div className={`p-2.5 border-t flex-shrink-0 ${isDark ? 'bg-neutral-900 border-neutral-800' : 'bg-white dark:bg-neutral-900 border-neutral-100 dark:border-neutral-800'}`}>
+          <div className="text-center">
+            <p className={`text-[9px] font-medium mb-0.5 ${isDark ? 'text-neutral-400 dark:text-neutral-500' : 'text-neutral-500 dark:text-neutral-400 dark:text-neutral-500'}`} style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '0.02em' }}>DermApp Professional</p>
+            <p className={`text-[8px] ${isDark ? 'text-neutral-600 dark:text-neutral-400 dark:text-neutral-500' : 'text-neutral-400 dark:text-neutral-500'}`} style={{ fontFamily: 'Inter, sans-serif' }}>Version 2.1.0</p>
+            <div className="flex justify-center space-x-1 mt-1.5">
+              <div className="w-1 h-1 bg-[#A8D32C] rounded-full animate-pulse" style={{animationDelay: '0s'}}></div>
+              <div className="w-1 h-1 bg-primary-400 rounded-full animate-pulse" style={{animationDelay: '0.2s'}}></div>
+              <div className="w-1 h-1 bg-primary-300 rounded-full animate-pulse" style={{animationDelay: '0.4s'}}></div>
+            </div>
+          </div>
+        </div>
       </aside>
 
-      {/* Estilos de animación personalizados */}
-      <style jsx>{`
-        @keyframes pulse-scale {
-          0% { transform: scale(1); }
-          50% { transform: scale(1.1); }
-          100% { transform: scale(1); }
-        }
-        .animate-pulse-scale {
-          animation: pulse-scale 2s ease-in-out infinite;
-        }
-        
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        .animate-fadeIn {
-          animation: fadeIn 0.3s ease-out;
-        }
-      `}</style>
+      {/* Modal de Login */}
+      <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
     </>
   );
 };

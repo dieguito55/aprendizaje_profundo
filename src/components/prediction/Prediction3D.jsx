@@ -13,18 +13,17 @@ import { DISEASES_DATA } from "../../data/diseases";
 import {
   FaExpand,
   FaCompress,
-  FaInfoCircle,
-  FaShieldAlt,
-  FaExclamationTriangle,
-  FaStethoscope,
-  FaTimes,
   FaLightbulb,
+  FaTimes,
+  FaStethoscope,
+  FaExclamationTriangle,
+  FaShieldAlt,
   FaRocket,
 } from "react-icons/fa";
 
 extend(THREE);
 
-// ------- util: valida cabecera de fuente -------
+// Validar cabecera de fuente
 async function preflightFont(url) {
   try {
     const res = await fetch(url, { cache: "no-store" });
@@ -41,7 +40,7 @@ async function preflightFont(url) {
 }
 
 /**
- * Nodo interactivo premium (con forwardRef para exponer posici√≥n mundial)
+ * Nodo interactivo premium con colores corporativos
  */
 const DiseaseNode = forwardRef(function DiseaseNode(
   {
@@ -52,7 +51,6 @@ const DiseaseNode = forwardRef(function DiseaseNode(
     isNear,
     index,
     onNodeClick,
-    hoveredNode,
     setHoveredNode,
     safeFontUrl,
   },
@@ -69,7 +67,6 @@ const DiseaseNode = forwardRef(function DiseaseNode(
   const [isHovered, setIsHovered] = useState(false);
   const hoverScale = useRef(1);
 
-  // Exponer m√©todo que devuelve el centro en coords mundiales (para l√≠neas)
   useImperativeHandle(ref, () => ({
     getCenterWorld: () => {
       const v = new THREE.Vector3();
@@ -80,26 +77,26 @@ const DiseaseNode = forwardRef(function DiseaseNode(
 
   const nodeConfig = useMemo(() => {
     const baseColors = {
-      top: "#F15F79",
-      near: "#8C7FE9",
-      normal: "#34C759",
+      top: "#A8D32C",      // Verde corporativo principal
+      near: "#A8D32C",     // Verde esmeralda
+      normal: "#C5E86C",   // Verde claro
     };
 
     if (isTop) {
       return {
         color: baseColors.top,
-        glowColor: baseColors.top,
+        glowColor: "#C5E86C",
         scale: 0.8 + (prob || 0) * 0.4,
         glowOpacity: 0.9,
         metalness: 0.2,
         roughness: 0.1,
-        emissiveIntensity: 0.4,
+        emissiveIntensity: 0.5,
       };
     }
     if (isNear) {
       return {
         color: baseColors.near,
-        glowColor: baseColors.near,
+        glowColor: "#6EE7B7",
         scale: 0.6 + (prob || 0) * 0.3,
         glowOpacity: 0.6,
         metalness: 0.3,
@@ -109,7 +106,7 @@ const DiseaseNode = forwardRef(function DiseaseNode(
     }
     return {
       color: baseColors.normal,
-      glowColor: baseColors.normal,
+      glowColor: "#A7F3D0",
       scale: 0.4 + (prob || 0) * 0.2,
       glowOpacity: 0.3,
       metalness: 0.4,
@@ -122,14 +119,12 @@ const DiseaseNode = forwardRef(function DiseaseNode(
     if (!meshRef.current) return;
     const time = state.clock.getElapsedTime();
 
-    // Flotaci√≥n del nodo: solo Y (X y Z = 0 porque el grupo ya est√° en "position")
     const floatY = Math.sin(time * 1.5 + index * 2) * 0.15;
     meshRef.current.position.set(0, floatY, 0);
 
     meshRef.current.rotation.x += 0.005;
     meshRef.current.rotation.y += 0.008;
 
-    // Pulso de importancia
     if (isTop || isHovered) {
       const pulseScale = 1 + Math.sin(time * 5) * 0.15;
       hoverScale.current = pulseScale;
@@ -137,16 +132,13 @@ const DiseaseNode = forwardRef(function DiseaseNode(
       hoverScale.current = 1;
     }
 
-    // Escala de la bola
     meshRef.current.scale.setScalar(nodeConfig.scale * hoverScale.current);
 
-    // Halo sigue/escala con la bola
     if (haloRef.current) {
       haloRef.current.position.copy(meshRef.current.position);
       haloRef.current.scale.setScalar(nodeConfig.scale * hoverScale.current * 2.5);
     }
 
-    // Anillos siguen a la bola
     if (ringRef1.current && isTop) {
       ringRef1.current.rotation.y += 0.02;
       ringRef1.current.rotation.x = Math.sin(time * 0.5) * 0.1;
@@ -163,7 +155,6 @@ const DiseaseNode = forwardRef(function DiseaseNode(
       ringRef3.current.rotation.y = Math.PI / 4 + Math.cos(time * 0.2) * 0.02;
     }
 
-    // Etiquetas siguen a la bola (offset arriba/abajo)
     const upOffset = nodeConfig.scale * hoverScale.current + 0.8;
     const downOffset = nodeConfig.scale * hoverScale.current + 0.5;
     if (labelNameRef.current) {
@@ -184,7 +175,6 @@ const DiseaseNode = forwardRef(function DiseaseNode(
 
   const handleClick = (e) => {
     e.stopPropagation();
-    // Devolver posici√≥n mundial real del nodo
     const world = new THREE.Vector3();
     meshRef.current?.getWorldPosition(world);
     onNodeClick(diseaseId, [world.x, world.y, world.z]);
@@ -194,7 +184,7 @@ const DiseaseNode = forwardRef(function DiseaseNode(
 
   return (
     <group position={position}>
-      {/* Halo luminoso (pegado a la bola) */}
+      {/* Halo luminoso */}
       <mesh ref={haloRef}>
         <sphereGeometry args={[1, 32, 32]} />
         <meshBasicMaterial
@@ -206,12 +196,12 @@ const DiseaseNode = forwardRef(function DiseaseNode(
         />
       </mesh>
 
-      {/* Anillo orbital 1 - Horizontal */}
+      {/* Anillo orbital 1 - Verde corporativo */}
       {isTop && (
         <mesh ref={ringRef1}>
           <ringGeometry args={[nodeConfig.scale + 1.2, nodeConfig.scale + 1.3, 64]} />
           <meshBasicMaterial
-            color={nodeConfig.glowColor}
+            color="#A8D32C"
             transparent
             opacity={0.8}
             side={THREE.DoubleSide}
@@ -221,12 +211,12 @@ const DiseaseNode = forwardRef(function DiseaseNode(
         </mesh>
       )}
 
-      {/* Anillo orbital 2 - Vertical */}
+      {/* Anillo orbital 2 - Verde esmeralda */}
       {isTop && (
         <mesh ref={ringRef2} rotation={[Math.PI / 2, 0, 0]}>
           <ringGeometry args={[nodeConfig.scale + 0.8, nodeConfig.scale + 0.9, 64]} />
           <meshBasicMaterial
-            color="#8C7FE9"
+            color="#A8D32C"
             transparent
             opacity={0.6}
             side={THREE.DoubleSide}
@@ -236,12 +226,12 @@ const DiseaseNode = forwardRef(function DiseaseNode(
         </mesh>
       )}
 
-      {/* Anillo orbital 3 - Diagonal */}
+      {/* Anillo orbital 3 - Verde claro */}
       {isTop && (
         <mesh ref={ringRef3} rotation={[Math.PI / 4, Math.PI / 4, 0]}>
           <ringGeometry args={[nodeConfig.scale + 1.0, nodeConfig.scale + 1.1, 64]} />
           <meshBasicMaterial
-            color="#C19CFF"
+            color="#C5E86C"
             transparent
             opacity={0.5}
             side={THREE.DoubleSide}
@@ -310,7 +300,7 @@ const DiseaseNode = forwardRef(function DiseaseNode(
         </Text>
       )}
 
-      {/* Part√≠culas (dentro del grupo, acompa√±an la posici√≥n base) */}
+      {/* PartÌculas */}
       {(isTop || isHovered) && (
         <Sparkles
           count={20}
@@ -352,13 +342,11 @@ function Nodes({ probsVector = [], topK = [], onNodeClick, safeFontUrl }) {
   );
   const topMain = topIndices.length > 0 ? topIndices[0] : -1;
 
-  // Refs por nodo para trazar l√≠neas din√°micas desde sus centros reales
   const nodeRefs = useMemo(
     () => Array.from({ length: N }, () => React.createRef()),
     [N]
   );
 
-  // L√≠nea que se actualiza cada frame leyendo posiciones mundiales
   function ConnectionLine({ refA, refB }) {
     const lineRef = useRef();
     const a = useMemo(() => new THREE.Vector3(), []);
@@ -375,7 +363,7 @@ function Nodes({ probsVector = [], topK = [], onNodeClick, safeFontUrl }) {
       <line ref={lineRef}>
         <bufferGeometry />
         <lineBasicMaterial
-          color="#8C7FE9"
+          color="#A8D32C"
           transparent
           opacity={0.4}
           blending={THREE.AdditiveBlending}
@@ -387,7 +375,6 @@ function Nodes({ probsVector = [], topK = [], onNodeClick, safeFontUrl }) {
 
   return (
     <group>
-      {/* Fondo estelar */}
       <Stars radius={50} depth={30} count={2000} factor={4} saturation={0} fade speed={1} />
 
       {positions.map((p, i) => {
@@ -414,7 +401,6 @@ function Nodes({ probsVector = [], topK = [], onNodeClick, safeFontUrl }) {
         );
       })}
 
-      {/* Conexiones entre nodo principal y los siguientes (din√°micas) */}
       {topMain >= 0 &&
         topIndices.slice(1).map((j, idx) => (
           <ConnectionLine key={idx} refA={nodeRefs[topMain]} refB={nodeRefs[j]} />
@@ -424,40 +410,31 @@ function Nodes({ probsVector = [], topK = [], onNodeClick, safeFontUrl }) {
 }
 
 /**
- * Panel de informaci√≥n premium
+ * Panel de informaciÛn premium con colores corporativos
  */
 function DiseaseInfoPanel({ disease, position, onClose }) {
   if (!disease) return null;
 
   const getSeverityColor = (severity) => {
     const colors = {
-      Alta: "#F15F79",
-      "Moderada-Alta": "#FF6B35",
-      Moderada: "#FFA726",
-      "Leve-Moderada": "#34C759",
-      Leve: "#8C7FE9",
-      "Muy Baja": "#828E9D",
+      Alta: "#EF4444",
+      "Moderada-Alta": "#F59E0B",
+      Moderada: "#F59E0B",
+      "Leve-Moderada": "#A8D32C",
+      Leve: "#A8D32C",
+      "Muy Baja": "#6B7280",
     };
-    return colors[severity] || "#828E9D";
+    return colors[severity] || "#6B7280";
   };
 
   return (
     <Html position={position} center>
-      <div
-        className="
-        bg-white/95 backdrop-blur-2xl 
-        rounded-3xl 
-        shadow-2xl 
-        border border-white/40
-        p-6 
-        max-w-sm w-80 
-        animate-scaleIn
-        relative
-        overflow-hidden
-      "
-      >
+      <div className="bg-white dark:bg-neutral-900/95 backdrop-blur-2xl rounded-2xl shadow-2xl border-2 p-5 max-w-sm w-80 animate-scaleIn relative overflow-hidden"
+           style={{ borderColor: '#A8D32C' }}>
+        
         {/* Efectos de fondo */}
-        <div className="absolute top-0 right-0 w-20 h-20 bg-[#8C7FE9]/10 rounded-full blur-2xl -translate-y-10 translate-x-10"></div>
+        <div className="absolute top-0 right-0 w-20 h-20 rounded-full blur-2xl -translate-y-10 translate-x-10"
+             style={{ background: 'rgba(47, 143, 78, 0.1)' }}></div>
 
         <div className="relative z-10">
           {/* Header */}
@@ -465,56 +442,47 @@ function DiseaseInfoPanel({ disease, position, onClose }) {
             <div className="flex items-center space-x-3">
               <div className="text-3xl">{disease.icon}</div>
               <div>
-                <h3 className="font-bold text-[#342B7C] text-lg font-sans">{disease.name}</h3>
-                <p className="text-[#342B7C]/60 text-sm italic font-light">{disease.scientificName}</p>
+                <h3 className="font-bold text-neutral-900 dark:text-white text-base" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                  {disease.name}
+                </h3>
+                <p className="text-neutral-600 dark:text-neutral-400 text-xs italic">{disease.scientificName}</p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="
-                w-8 h-8 
-                bg-white/80 hover:bg-[#F15F79]/10 
-                rounded-xl 
-                flex items-center justify-center 
-                transition-all duration-300
-                border border-white/40
-                hover:scale-110
-              "
+              className="w-8 h-8 bg-white dark:bg-neutral-900/80 hover:bg-red-50 rounded-xl flex items-center justify-center transition-all duration-300 border border-neutral-200 dark:border-neutral-700 hover:scale-110"
             >
-              <FaTimes className="w-3 h-3 text-[#342B7C]" />
+              <FaTimes className="w-3 h-3 text-neutral-700 dark:text-neutral-300" />
             </button>
           </div>
 
-          {/* Estad√≠sticas */}
+          {/* EstadÌsticas */}
           <div className="grid grid-cols-2 gap-3 mb-4">
-            <div className="bg-gradient-to-br from-[#FDEEFD] to-[#D8DFF9] rounded-xl p-3 text-center">
-              <div className="text-xs text-[#342B7C]/60 font-medium">Severidad</div>
-              <div
-                className="font-bold text-[#342B7C] text-sm"
-                style={{ color: getSeverityColor(disease.severity) }}
-              >
+            <div className="bg-[#A8D32C]/10 rounded-xl p-3 text-center border-2" style={{ borderColor: '#A8D32C' }}>
+              <div className="text-xs text-neutral-600 dark:text-neutral-400 font-medium">Severidad</div>
+              <div className="font-bold text-sm" style={{ color: getSeverityColor(disease.severity) }}>
                 {disease.severity}
               </div>
             </div>
-            <div className="bg-gradient-to-br from-[#FDEEFD] to-[#D8DFF9] rounded-xl p-3 text-center">
-              <div className="text-xs text-[#342B7C]/60 font-medium">Contagioso</div>
-              <div className={`font-bold text-sm ${disease.contagious ? "text-[#F15F79]" : "text-[#34C759]"}`}>
-                {disease.contagious ? "S√≠" : "No"}
+            <div className="bg-blue-50 rounded-xl p-3 text-center border border-blue-200">
+              <div className="text-xs text-neutral-600 dark:text-neutral-400 font-medium">Contagioso</div>
+              <div className={`font-bold text-sm ${disease.contagious ? "text-red-600" : "text-[#A8D32C]"}`}>
+                {disease.contagious ? "SÌ" : "No"}
               </div>
             </div>
           </div>
 
-          {/* S√≠ntomas */}
+          {/* SÌntomas */}
           <div className="mb-4">
-            <h4 className="font-semibold text-[#342B7C] text-sm mb-3 flex items-center space-x-2">
-              <FaStethoscope className="w-3 h-3 text-[#8C7FE9]" />
-              <span>S√≠ntomas Principales</span>
+            <h4 className="font-semibold text-neutral-900 dark:text-white text-sm mb-3 flex items-center space-x-2">
+              <FaStethoscope className="w-3 h-3" style={{ color: '#A8D32C' }} />
+              <span>SÌntomas Principales</span>
             </h4>
             <div className="space-y-2">
               {disease.symptoms.slice(0, 3).map((s, idx) => (
-                <div key={idx} className="flex items-start space-x-3 text-sm text-[#342B7C]/80">
-                  <div className="w-2 h-2 bg-gradient-to-r from-[#8C7FE9] to-[#C19CFF] rounded-full mt-1.5 flex-shrink-0"></div>
-                  <span className="font-light leading-relaxed">{s}</span>
+                <div key={idx} className="flex items-start space-x-3 text-sm text-neutral-700 dark:text-neutral-300">
+                  <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0" style={{ backgroundColor: '#A8D32C' }}></div>
+                  <span className="leading-relaxed">{s}</span>
                 </div>
               ))}
             </div>
@@ -522,42 +490,23 @@ function DiseaseInfoPanel({ disease, position, onClose }) {
 
           {/* Alerta urgente */}
           {disease.urgent && (
-            <div
-              className="
-              bg-gradient-to-r from-[#F15F79]/10 to-[#C19CFF]/10 
-              border border-[#F15F79]/30 
-              rounded-xl p-3 mb-4
-            "
-            >
+            <div className="bg-red-50 border-2 border-red-200 rounded-xl p-3 mb-4">
               <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-gradient-to-r from-[#F15F79] to-[#C19CFF] rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 bg-red-500 rounded-lg flex items-center justify-center">
                   <FaExclamationTriangle className="text-white w-3 h-3" />
                 </div>
                 <div>
-                  <p className="font-bold text-[#F15F79] text-sm">Condici√≥n Urgente</p>
-                  <p className="text-[#342B7C]/70 text-xs font-light">Requiere atenci√≥n m√©dica inmediata</p>
+                  <p className="font-bold text-red-600 text-sm">CondiciÛn Urgente</p>
+                  <p className="text-neutral-700 dark:text-neutral-300 text-xs">Requiere atenciÛn mÈdica inmediata</p>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Bot√≥n de acci√≥n */}
-          <button
-            className="
-            w-full 
-            bg-gradient-to-r from-[#342B7C] to-[#8C7FE9] 
-            text-white py-3 px-4 
-            rounded-2xl 
-            font-semibold 
-            hover:shadow-xl 
-            transition-all duration-500 
-            transform hover:scale-105
-            flex items-center justify-center space-x-2
-            group
-            overflow-hidden
-          "
-          >
-            <div className="absolute inset-0 bg-gradient-to-r from-[#8C7FE9] to-[#C19CFF] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+          {/* BotÛn de acciÛn */}
+          <button className="w-full text-white py-3 px-4 rounded-xl font-semibold hover:shadow-xl transition-all duration-500 transform hover:scale-105 flex items-center justify-center space-x-2 group overflow-hidden"
+                  style={{ backgroundColor: '#A8D32C' }}>
+            <div className="absolute inset-0 bg-[#8ab824] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             <FaLightbulb className="w-4 h-4 relative z-10" />
             <span className="relative z-10">Ver Detalles Completos</span>
           </button>
@@ -568,9 +517,9 @@ function DiseaseInfoPanel({ disease, position, onClose }) {
 }
 
 /**
- * Componente principal premium
+ * Componente principal premium con colores corporativos
  */
-export default function Prediction3D({ probsVector, topK, selectedImage }) {
+export default function Prediction3D({ probsVector, topK }) {
   const [selectedDisease, setSelectedDisease] = useState(null);
   const [infoPanelPosition, setInfoPanelPosition] = useState([0, 0, 0]);
   const [isLoading, setIsLoading] = useState(true);
@@ -578,7 +527,6 @@ export default function Prediction3D({ probsVector, topK, selectedImage }) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const containerRef = useRef();
 
-  // Cargar fuente
   useEffect(() => {
     let mounted = true;
     preflightFont("/fonts/Inter-Bold.ttf").then((url) => {
@@ -617,24 +565,22 @@ export default function Prediction3D({ probsVector, topK, selectedImage }) {
   return (
     <div
       ref={containerRef}
-      className={`
-        w-full h-full rounded-3xl overflow-hidden relative 
-        bg-gradient-to-br from-[#342B7C]/10 to-[#8C7FE9]/10 
-        border border-white/40
-        shadow-2xl
-        group/canvas
-        ${isFullscreen ? "fixed inset-0 z-50" : ""}
-      `}
+      className={`w-full h-full rounded-2xl overflow-hidden relative bg-gradient-to-br from-neutral-900 to-neutral-800 border-2 shadow-2xl group/canvas ${isFullscreen ? "fixed inset-0 z-50 rounded-none" : ""}`}
+      style={{ borderColor: '#A8D32C' }}
     >
-      <Canvas camera={{ position: [0, 0, 15], fov: 45, near: 0.1, far: 1000 }} onCreated={() => setIsLoading(false)} gl={{ antialias: true }}>
-        <color attach="background" args={["#0A0F2C"]} />
+      <Canvas 
+        camera={{ position: [0, 0, 15], fov: 45, near: 0.1, far: 1000 }} 
+        onCreated={() => setIsLoading(false)} 
+        gl={{ antialias: true }}
+      >
+        <color attach="background" args={["#0F172A"]} />
 
         <ambientLight intensity={0.4} />
         <directionalLight position={[15, 15, 10]} intensity={1.2} castShadow />
-        <pointLight position={[-10, -10, -10]} intensity={0.5} color="#8C7FE9" />
-        <pointLight position={[10, 10, 10]} intensity={0.3} color="#F15F79" />
+        <pointLight position={[-10, -10, -10]} intensity={0.5} color="#A8D32C" />
+        <pointLight position={[10, 10, 10]} intensity={0.3} color="#A8D32C" />
 
-        <fog attach="fog" args={["#0A0F2C", 20, 50]} />
+        <fog attach="fog" args={["#0F172A", 20, 50]} />
 
         <Nodes probsVector={probsVector} topK={topK} onNodeClick={handleNodeClick} safeFontUrl={safeFontUrl} />
 
@@ -652,126 +598,118 @@ export default function Prediction3D({ probsVector, topK, selectedImage }) {
         {selectedDisease && <DiseaseInfoPanel disease={selectedDisease} position={infoPanelPosition} onClose={handleClosePanel} />}
       </Canvas>
 
-      {/* Loading State Premium */}
+      {/* Loading State */}
       {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#342B7C] to-[#0A0F2C] backdrop-blur-xl">
+        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-neutral-900 to-neutral-800 backdrop-blur-xl">
           <div className="text-center">
             <div className="relative mb-6">
-              <div className="w-20 h-20 bg-gradient-to-r from-[#8C7FE9] to-[#C19CFF] rounded-3xl animate-spin">
-                <div className="absolute inset-3 bg-[#0A0F2C] rounded-2xl"></div>
+              <div className="w-20 h-20 rounded-2xl animate-spin" style={{ background: 'linear-gradient(135deg, #A8D32C, #A8D32C)' }}>
+                <div className="absolute inset-3 bg-neutral-900 rounded-xl"></div>
               </div>
-              <FaRocket className="w-8 h-8 text-[#8C7FE9] absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 animate-pulse" />
+              <FaRocket className="w-8 h-8 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 animate-pulse" 
+                        style={{ color: '#A8D32C' }} />
             </div>
-            <h3 className="text-white font-semibold text-xl mb-2">Inicializando Visualizaci√≥n 3D</h3>
-            <p className="text-white/60 font-light">Cargando universo de diagn√≥sticos...</p>
+            <h3 className="text-white font-semibold text-xl mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+              Inicializando VisualizaciÛn 3D
+            </h3>
+            <p className="text-neutral-400">Cargando sistema de diagnÛsticos...</p>
 
-            {/* Indicador de progreso */}
             <div className="flex justify-center space-x-2 mt-6">
               {[1, 2, 3, 4, 5].map((dot) => (
-                <div key={dot} className="w-2 h-2 bg-[#8C7FE9] rounded-full animate-bounce" style={{ animationDelay: `${dot * 0.1}s` }}></div>
+                <div key={dot} className="w-2 h-2 rounded-full animate-bounce" 
+                     style={{ backgroundColor: '#A8D32C', animationDelay: `${dot * 0.1}s` }}></div>
               ))}
             </div>
           </div>
         </div>
       )}
 
-      {/* Estado vac√≠o premium */}
+      {/* Estado vacÌo */}
       {!topK && !isLoading && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <div
-            className="
-            text-center 
-            bg-white/90 backdrop-blur-2xl 
-            rounded-3xl p-8 
-            border border-white/40 
-            shadow-2xl
-            max-w-md
-            mx-4
-          "
-          >
-            <div className="w-24 h-24 bg-gradient-to-br from-[#FDEEFD] to-[#D8DFF9] rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-              <FaRocket className="w-10 h-10 text-[#8C7FE9]" />
+          <div className="text-center bg-white dark:bg-neutral-900/95 backdrop-blur-2xl rounded-2xl p-8 border-2 shadow-2xl max-w-md mx-4"
+               style={{ borderColor: '#A8D32C' }}>
+            <div className="w-24 h-24 bg-[#A8D32C]/10 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg border-2"
+                 style={{ borderColor: '#A8D32C' }}>
+              <FaRocket className="w-10 h-10" style={{ color: '#A8D32C' }} />
             </div>
-            <h3 className="font-bold text-[#342B7C] text-2xl mb-3 font-sans">Universo de Diagn√≥sticos</h3>
-            <p className="text-[#342B7C]/70 text-lg mb-2 font-light">Esperando an√°lisis para mostrar resultados</p>
-            <p className="text-[#342B7C]/50 text-sm">Sube una imagen o usa la c√°mara para comenzar el viaje</p>
+            <h3 className="font-bold text-neutral-900 dark:text-white text-2xl mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
+              VisualizaciÛn 3D
+            </h3>
+            <p className="text-neutral-600 dark:text-neutral-400 text-base mb-2">Esperando an·lisis para mostrar resultados</p>
+            <p className="text-neutral-500 text-sm">Sube una imagen o usa la c·mara para comenzar</p>
           </div>
         </div>
       )}
 
-      {/* Controles de interfaz premium */}
-      <div className="absolute bottom-6 left-6 bg-white/90 backdrop-blur-xl rounded-2xl p-4 border border-white/40 shadow-2xl">
-        <div className="space-y-3 text-sm text-[#342B7C]">
+      {/* Controles de interfaz */}
+      <div className="absolute bottom-6 left-6 bg-white dark:bg-neutral-900/95 backdrop-blur-xl rounded-xl p-4 border-2 shadow-xl"
+           style={{ borderColor: '#A8D32C' }}>
+        <div className="space-y-3 text-sm text-neutral-900 dark:text-white">
           <div className="flex items-center space-x-3">
-            <div className="w-4 h-4 bg-[#F15F79] rounded-full shadow-lg"></div>
-            <span className="font-semibold">Diagn√≥stico Principal</span>
+            <div className="w-4 h-4 rounded-full shadow-lg" style={{ backgroundColor: '#A8D32C' }}></div>
+            <span className="font-semibold">Principal</span>
           </div>
           <div className="flex items-center space-x-3">
-            <div className="w-4 h-4 bg-[#8C7FE9] rounded-full shadow-lg"></div>
-            <span className="font-semibold">Otras Posibilidades</span>
+            <div className="w-4 h-4 rounded-full shadow-lg" style={{ backgroundColor: '#A8D32C' }}></div>
+            <span className="font-semibold">Alternativas</span>
           </div>
           <div className="flex items-center space-x-3">
-            <div className="w-4 h-4 bg-[#34C759] rounded-full shadow-lg"></div>
-            <span className="font-semibold">Enfermedades</span>
+            <div className="w-4 h-4 rounded-full shadow-lg" style={{ backgroundColor: '#C5E86C' }}></div>
+            <span className="font-semibold">Otros</span>
           </div>
         </div>
       </div>
 
-      {/* Panel de informaci√≥n premium */}
-      <div className="absolute top-6 right-6 bg-white/90 backdrop-blur-xl rounded-2xl p-4 border border-white/40 shadow-2xl max-w-xs">
+      {/* Panel de informaciÛn */}
+      <div className="absolute top-6 right-6 bg-white dark:bg-neutral-900/95 backdrop-blur-xl rounded-xl p-4 border-2 shadow-xl max-w-xs"
+           style={{ borderColor: '#A8D32C' }}>
         <div className="flex items-center space-x-3 mb-3">
-          <div className="w-8 h-8 bg-gradient-to-r from-[#342B7C] to-[#8C7FE9] rounded-xl flex items-center justify-center">
-            <FaLightbulb className="text-white w-3 h-3" />
+          <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#A8D32C' }}>
+            <FaLightbulb className="text-white w-4 h-4" />
           </div>
-          <p className="text-[#342B7C] font-semibold text-sm">Interact√∫a con la Visualizaci√≥n</p>
+          <p className="text-neutral-900 dark:text-white font-semibold text-sm">Interact˙a</p>
         </div>
-        <ul className="text-[#342B7C]/70 text-xs space-y-2 font-light">
+        <ul className="text-neutral-600 dark:text-neutral-400 text-xs space-y-2">
           <li className="flex items-center space-x-2">
-            <div className="w-1.5 h-1.5 bg-[#8C7FE9] rounded-full"></div>
-            <span>Haz clic en cualquier nodo para ver detalles</span>
+            <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#A8D32C' }}></div>
+            <span>Clic en nodos para detalles</span>
           </li>
           <li className="flex items-center space-x-2">
-            <div className="w-1.5 h-1.5 bg-[#8C7FE9] rounded-full"></div>
-            <span>Arrastra para rotar la vista</span>
+            <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#A8D32C' }}></div>
+            <span>Arrastra para rotar</span>
           </li>
           <li className="flex items-center space-x-2">
-            <div className="w-1.5 h-1.5 bg-[#8C7FE9] rounded-full"></div>
-            <span>Usa la rueda para hacer zoom</span>
+            <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#A8D32C' }}></div>
+            <span>Rueda para zoom</span>
           </li>
         </ul>
       </div>
 
-      {/* Bot√≥n de pantalla completa premium */}
+      {/* BotÛn pantalla completa */}
       <button
         onClick={toggleFullscreen}
-        className="
-          absolute top-6 left-6
-          bg-white/90 backdrop-blur-xl 
-          rounded-2xl p-3 
-          border border-white/40 
-          shadow-2xl
-          transition-all duration-500
-          hover:scale-110 hover:shadow-3xl
-          group/fs
-        "
+        className="absolute top-6 left-6 bg-white dark:bg-neutral-900/95 backdrop-blur-xl rounded-xl p-3 border-2 shadow-xl transition-all duration-500 hover:scale-110 hover:shadow-2xl group/fs"
+        style={{ borderColor: '#A8D32C' }}
       >
         {isFullscreen ? (
-          <FaCompress className="w-5 h-5 text-[#342B7C] group-hover/fs:text-[#8C7FE9] transition-colors duration-300" />
+          <FaCompress className="w-5 h-5 text-neutral-900 dark:text-white group-hover/fs:text-[#A8D32C] transition-colors duration-300" />
         ) : (
-          <FaExpand className="w-5 h-5 text-[#342B7C] group-hover/fs:text-[#8C7FE9] transition-colors duration-300" />
+          <FaExpand className="w-5 h-5 text-neutral-900 dark:text-white group-hover/fs:text-[#A8D32C] transition-colors duration-300" />
         )}
       </button>
 
-      {/* Disclaimer premium */}
-      <div className="absolute bottom-6 right-6 bg-white/90 backdrop-blur-xl rounded-2xl p-4 border border-white/40 shadow-2xl max-w-xs">
+      {/* Disclaimer */}
+      <div className="absolute bottom-6 right-6 bg-white dark:bg-neutral-900/95 backdrop-blur-xl rounded-xl p-4 border-2 shadow-xl max-w-xs"
+           style={{ borderColor: '#A8D32C' }}>
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-gradient-to-r from-[#342B7C] to-[#8C7FE9] rounded-xl flex items-center justify-center">
+          <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#A8D32C' }}>
             <FaShieldAlt className="text-white w-3 h-3" />
           </div>
-          <p className="text-[#342B7C] text-xs font-semibold">Visualizaci√≥n Educativa</p>
+          <p className="text-neutral-900 dark:text-white text-xs font-semibold">Educativo</p>
         </div>
-        <p className="text-[#342B7C]/60 text-xs mt-2 font-light">
-          Representaci√≥n 3D de probabilidades diagn√≥sticas con fines educativos
+        <p className="text-neutral-600 dark:text-neutral-400 text-xs mt-2">
+          VisualizaciÛn 3D con fines educativos
         </p>
       </div>
     </div>

@@ -205,11 +205,19 @@ export async function predictComplete(model, imageElement, k = 3, labels = []) {
       minBoxPx: 10,
     });
 
-    const out = top;
-    out.vector = vector;
-    out.rois = rois;
-    out.roi = rois[0] ?? { x: 0.25, y: 0.25, w: 0.5, h: 0.5 };
-    return out;
+    // Mapear top con el formato correcto
+    const result = top.map(item => ({
+      className: item.diseaseName || item.label || `Clase ${item.index}`,
+      probability: item.prob,
+      index: item.index
+    }));
+
+    // Agregar propiedades extra al array
+    result.vector = vector;
+    result.rois = rois;
+    result.roi = rois[0] ?? { x: 0.25, y: 0.25, w: 0.5, h: 0.5 };
+    
+    return result;
   } finally {
     if (x) x.dispose();
     if (y && y.dispose) y.dispose();

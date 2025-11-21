@@ -1,11 +1,12 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import Layout from './components/layout/Layout';
+import ProtectedRoute from './components/auth/ProtectedRoute';
 import Home from './pages/Home';
 import Diseases from './pages/Diseases';
 import Prediction from './pages/Prediction';
 import Analizar from './pages/Analizar';
-
+import Retrain from './pages/Retrain';
 import About from './pages/About';
 import { FaTools, FaBookMedical } from 'react-icons/fa';
 import './index.css'; // Cambiar esta línea
@@ -74,7 +75,16 @@ function App() {
           <Route path="/enfermedades" element={<Diseases />} />
           <Route path="/prediccion" element={<Prediction />} />
           <Route path="/nosotros" element={<About />} />
-          <Route path="/analizar" element={<Analizar />} />
+          <Route path="/analizar" element={
+            <ProtectedRoute>
+              <Analizar />
+            </ProtectedRoute>
+          } />
+          <Route path="/reentrenar" element={
+            <ProtectedRoute>
+              <Retrain />
+            </ProtectedRoute>
+          } />
 
           {/* Ruta opcional para usar explícitamente el placeholder */}
           <Route path="/en-desarrollo" element={<EnDesarrollo />} />

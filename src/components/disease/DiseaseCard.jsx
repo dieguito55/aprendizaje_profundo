@@ -1,374 +1,143 @@
-import React from 'react';
-import { FaStethoscope, FaExclamationTriangle, FaSkullCrossbones, FaShieldAlt, FaArrowRight, FaClock, FaUserMd, FaLayerGroup } from 'react-icons/fa';
+﻿import React from 'react';
+import { 
+  FaStethoscope, FaExclamationTriangle, FaShieldAlt, 
+  FaVirus, FaClock, FaUserMd, FaChartLine, FaArrowRight
+} from 'react-icons/fa';
 
 const DiseaseCard = ({ disease, onClick }) => {
+    // Imágenes médicas profesionales
+  const getDiseaseImage = (diseaseName) => {
+    const imageMap = {
+      'Eccema': 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=800&h=600&fit=crop&q=85',
+      'Melanoma': 'https://images.unsplash.com/photo-1559757175-5700dde675bc?w=800&h=600&fit=crop&q=85',
+      'Dermatitis Atópica': 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&h=600&fit=crop&q=85',
+      'Carcinoma Basocelular': 'https://images.unsplash.com/photo-1579154204601-01588f351e67?w=800&h=600&fit=crop&q=85',
+      'Nevus Melanocítico': 'https://images.unsplash.com/photo-1582560475093-ba66accbc424?w=800&h=600&fit=crop&q=85',
+      'Queratosis Benigna': 'https://images.unsplash.com/photo-1581594549595-35f6edc7b762?w=800&h=600&fit=crop&q=85',
+      'Psoriasis': 'https://images.unsplash.com/photo-1579154204629-055a87ecfdd6?w=800&h=600&fit=crop&q=85',
+      'Queratosis Seborreica': 'https://images.unsplash.com/photo-1631549916768-4119b2e5f926?w=800&h=600&fit=crop&q=85'
+    };
+    return imageMap[diseaseName] || 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&h=600&fit=crop&q=85';
+  };
+
   const getSeverityConfig = (severity) => {
     const configs = {
-      'Alta': { 
-        color: 'from-[#F15F79] to-[#C19CFF]', 
-        bg: 'bg-gradient-to-r from-[#F15F79]/15 to-[#C19CFF]/15', 
-        border: 'border-[#F15F79]/30',
-        text: 'text-[#F15F79]',
-        icon: <FaExclamationTriangle className="w-3 h-3" />,
-        glow: 'shadow-[#F15F79]/20'
-      },
-      'Moderada-Alta': { 
-        color: 'from-[#F15F79] to-[#8C7FE9]', 
-        bg: 'bg-gradient-to-r from-[#F15F79]/15 to-[#8C7FE9]/15', 
-        border: 'border-[#F15F79]/25',
-        text: 'text-[#F15F79]',
-        icon: <FaExclamationTriangle className="w-3 h-3" />,
-        glow: 'shadow-[#F15F79]/15'
-      },
-      'Moderada': { 
-        color: 'from-[#8C7FE9] to-[#342B7C]', 
-        bg: 'bg-gradient-to-r from-[#8C7FE9]/15 to-[#342B7C]/15', 
-        border: 'border-[#8C7FE9]/25',
-        text: 'text-[#8C7FE9]',
-        icon: <FaStethoscope className="w-3 h-3" />,
-        glow: 'shadow-[#8C7FE9]/15'
-      },
-      'Leve-Moderada': { 
-        color: 'from-[#258CAB] to-[#8C7FE9]', 
-        bg: 'bg-gradient-to-r from-[#258CAB]/15 to-[#8C7FE9]/15', 
-        border: 'border-[#258CAB]/25',
-        text: 'text-[#258CAB]',
-        icon: <FaStethoscope className="w-3 h-3" />,
-        glow: 'shadow-[#258CAB]/15'
-      },
-      'Leve': { 
-        color: 'from-[#342B7C] to-[#8C7FE9]', 
-        bg: 'bg-gradient-to-r from-[#342B7C]/15 to-[#8C7FE9]/15', 
-        border: 'border-[#342B7C]/25',
-        text: 'text-[#342B7C]',
-        icon: <FaShieldAlt className="w-3 h-3" />,
-        glow: 'shadow-[#342B7C]/10'
-      },
-      'Muy Baja': { 
-        color: 'from-[#D8DFF9] to-[#8C7FE9]', 
-        bg: 'bg-gradient-to-r from-[#D8DFF9] to-[#8C7FE9]/10', 
-        border: 'border-[#8C7FE9]/20',
-        text: 'text-[#342B7C]/70',
-        icon: <FaShieldAlt className="w-3 h-3" />,
-        glow: 'shadow-[#8C7FE9]/5'
-      }
+      'Alta': { color: '#DC2626', bg: 'bg-red-50', text: 'text-red-700', icon: FaExclamationTriangle },
+      'Moderada-Alta': { color: '#EA580C', bg: 'bg-orange-50', text: 'text-orange-700', icon: FaExclamationTriangle },
+      'Moderada': { color: '#D97706', bg: 'bg-amber-50', text: 'text-amber-700', icon: FaStethoscope },
+      'Leve-Moderada': { color: '#A8D32C', bg: 'bg-[#A8D32C]/10', text: 'text-[#8ab824]', icon: FaStethoscope },
+      'Leve': { color: '#A8D32C', bg: 'bg-[#A8D32C]/10', text: 'text-[#8ab824]', icon: FaShieldAlt },
+      'Muy Baja': { color: '#64748B', bg: 'bg-slate-50', text: 'text-slate-700', icon: FaShieldAlt }
     };
     return configs[severity] || configs['Muy Baja'];
   };
 
   const severityConfig = getSeverityConfig(disease.severity);
+  const SeverityIcon = severityConfig.icon;
 
   return (
-    <div 
-      className="
-        group relative 
-        bg-white/90 backdrop-blur-xl 
-        rounded-3xl 
-        shadow-2xl hover:shadow-3xl 
-        transition-all duration-700 
-        cursor-pointer 
-        transform hover:scale-105 
-        overflow-hidden
-        border border-white/40 hover:border-[#8C7FE9]/30
-        animate-fadeInUp
-        hover:z-10
-      "
+    <article 
       onClick={onClick}
-      style={{ animationDelay: `${Math.random() * 500}ms` }}
+      className="group relative bg-white dark:bg-neutral-900 rounded-xl overflow-hidden cursor-pointer transition-all duration-300 border border-neutral-200 dark:border-neutral-700 hover:border-primary-400 hover:shadow-2xl"
+      style={{
+        fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif'
+      }}
     >
-      {/* Efecto de gradiente superior animado */}
-      <div className="relative h-3 bg-gradient-to-r from-[#342B7C] via-[#8C7FE9] to-[#C19CFF] overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent transform -skew-x-12 animate-shine"></div>
-        {/* Puntos decorativos */}
-        <div className="absolute top-1 left-4 w-1 h-1 bg-white rounded-full animate-ping"></div>
-        <div className="absolute top-1 right-6 w-0.5 h-0.5 bg-white rounded-full animate-ping" style={{animationDelay: '1s'}}></div>
-      </div>
-      
-      {/* Contenido principal */}
-      <div className="p-6 lg:p-7 relative">
-        {/* Efecto de fondo sutil al hover */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#FDEEFD]/50 to-[#D8DFF9]/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl"></div>
+      {/* Imagen principal 16:9 ratio */}
+      <div className="relative aspect-[16/10] overflow-hidden bg-neutral-100 dark:bg-neutral-800">
+        <img 
+          src={getDiseaseImage(disease.name)}
+          alt={disease.name}
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+          loading="lazy"
+        />
         
-        {/* Header con Icono y Nombre Mejorado */}
-        <div className="flex items-start justify-between mb-5 relative z-10">
-          <div className="flex items-center space-x-4 flex-1 min-w-0">
-            <div className="relative group/icon">
-              <div className="
-                w-14 h-14 
-                bg-gradient-to-br from-[#342B7C] to-[#8C7FE9] 
-                rounded-2xl 
-                flex items-center justify-center 
-                shadow-2xl 
-                group-hover/icon:shadow-3xl 
-                transition-all duration-500 
-                group-hover/icon:scale-110
-                group-hover/icon:rotate-3
-              ">
-                <span className="text-white text-xl font-bold transform group-hover/icon:scale-110 transition-transform duration-300">
-                  {disease.icon}
-                </span>
+        {/* Overlay gradiente */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-90" />
+        
+        {/* Badges estado - Top right */}
+        {(disease.contagious || disease.urgent) && (
+          <div className="absolute top-3 right-3 flex flex-col gap-2">
+            {disease.contagious && (
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-red-600 shadow-lg">
+                <FaVirus className="w-3 h-3 text-white" />
+                <span className="text-[11px] font-bold text-white tracking-wide">CONTAGIOSO</span>
               </div>
-              {/* Efecto de glow exterior */}
-              <div className="absolute -inset-2 bg-gradient-to-r from-[#8C7FE9] to-[#C19CFF] rounded-2xl opacity-0 group-hover/icon:opacity-30 blur-lg transition-opacity duration-500"></div>
-              {/* Puntos decorativos */}
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-[#C19CFF] rounded-full animate-pulse"></div>
-            </div>
-            
-            <div className="flex-1 min-w-0 space-y-1">
-              <h3 className="
-                text-xl font-bold 
-                text-[#342B7C] 
-                group-hover:text-[#8C7FE9] 
-                transition-colors duration-500 
-                truncate
-                leading-tight
-              ">
-                {disease.name}
-              </h3>
-              <p className="
-                text-sm 
-                text-[#8C7FE9] 
-                italic 
-                truncate
-                font-medium
-              ">
-                {disease.scientificName}
-              </p>
-              {/* Categoría */}
-              <div className="flex items-center space-x-1">
-                <FaLayerGroup className="w-3 h-3 text-[#342B7C]/50" />
-                <span className="text-xs text-[#342B7C]/60 font-medium capitalize">
-                  {disease.category}
-                </span>
+            )}
+            {disease.urgent && (
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-amber-500 shadow-lg">
+                <FaClock className="w-3 h-3 text-white" />
+                <span className="text-[11px] font-bold text-white tracking-wide">URGENTE</span>
               </div>
-            </div>
+            )}
+          </div>
+        )}
+
+        {/* Icono grande - Top left */}
+        <div className="absolute top-3 left-3">
+          <div className="w-12 h-12 rounded-lg bg-white dark:bg-neutral-900/95 backdrop-blur-sm shadow-xl dark:shadow-neutral-900/50 flex items-center justify-center">
+            <span className="text-2xl">{disease.icon}</span>
           </div>
         </div>
 
-        {/* Descripción Mejorada */}
-        <div className="mb-5 relative z-10">
-          <p className="
-            text-sm 
-            text-[#342B7C]/80 
-            leading-relaxed 
-            line-clamp-2 
-            group-hover:line-clamp-3 
-            transition-all duration-500
-            font-light
-          ">
-            {disease.description}
+        {/* Título sobre imagen - Bottom */}
+        <div className="absolute bottom-0 left-0 right-0 p-4">
+          <h3 className="text-white font-bold text-lg leading-tight mb-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            {disease.name}
+          </h3>
+          <p className="text-white/90 text-xs italic truncate">
+            {disease.scientificName}
           </p>
         </div>
-
-        {/* Badges de Información Premium */}
-        <div className="flex flex-wrap gap-2 mb-5 relative z-10">
-          {/* Badge de Severidad Mejorado */}
-          <span className={`
-            inline-flex items-center space-x-2 
-            px-3 py-2 
-            rounded-xl 
-            text-xs font-semibold 
-            backdrop-blur-sm
-            transition-all duration-500 
-            group-hover:scale-105
-            border
-            ${severityConfig.bg} ${severityConfig.text} ${severityConfig.border}
-            shadow-lg ${severityConfig.glow}
-            group-hover:shadow-xl
-          `}>
-            {severityConfig.icon}
-            <span className="font-bold">{disease.severity}</span>
-          </span>
-
-          {/* Badge Contagioso Mejorado */}
-          {disease.contagious && (
-            <span className="
-              inline-flex items-center space-x-2 
-              px-3 py-2 
-              rounded-xl 
-              text-xs font-semibold
-              bg-gradient-to-r from-[#F15F79]/15 to-[#C19CFF]/15
-              text-[#F15F79]
-              border border-[#F15F79]/30
-              backdrop-blur-sm 
-              transition-all duration-500 
-              group-hover:scale-105
-              shadow-lg shadow-[#F15F79]/15
-              group-hover:shadow-xl
-            ">
-              <FaSkullCrossbones className="w-3 h-3" />
-              <span>Contagioso</span>
-            </span>
-          )}
-
-          {/* Badge Urgente con Animación Premium */}
-          {disease.urgent && (
-            <span className="
-              inline-flex items-center space-x-2 
-              px-3 py-2 
-              rounded-xl 
-              text-xs font-semibold
-              bg-gradient-to-r from-[#F15F79] to-[#C19CFF]
-              text-white
-              animate-pulse 
-              shadow-2xl 
-              group-hover:animate-none
-              transition-all duration-500 
-              group-hover:scale-105
-              group-hover:shadow-3xl
-              border border-[#F15F79]/40
-            ">
-              <FaExclamationTriangle className="w-3 h-3" />
-              <span>¡Urgente!</span>
-            </span>
-          )}
-
-          {/* Badge de Tiempo de Tratamiento */}
-          {disease.treatmentTime && (
-            <span className="
-              inline-flex items-center space-x-2 
-              px-3 py-2 
-              rounded-xl 
-              text-xs font-semibold
-              bg-gradient-to-r from-[#258CAB]/15 to-[#8C7FE9]/15
-              text-[#258CAB]
-              border border-[#258CAB]/25
-              backdrop-blur-sm
-              transition-all duration-500 
-              group-hover:scale-105
-            ">
-              <FaClock className="w-3 h-3" />
-              <span>{disease.treatmentTime}</span>
-            </span>
-          )}
-        </div>
-
-        {/* Síntomas Principales Premium */}
-        <div className="space-y-3 relative z-10">
-          <h4 className="
-            text-xs font-semibold 
-            text-[#342B7C]/60 
-            uppercase tracking-wider 
-            flex items-center space-x-2
-          ">
-            <div className="w-8 h-8 bg-gradient-to-r from-[#342B7C] to-[#8C7FE9] rounded-lg flex items-center justify-center">
-              <FaStethoscope className="w-3 h-3 text-white" />
-            </div>
-            <span>Síntomas Principales</span>
-          </h4>
-          <ul className="text-sm text-[#342B7C]/80 space-y-2.5">
-            {disease.symptoms.slice(0, 3).map((symptom, index) => (
-              <li 
-                key={index} 
-                className="
-                  flex items-start 
-                  group/item 
-                  animate-fadeIn
-                  p-2 
-                  rounded-lg
-                  hover:bg-white/50
-                  transition-all duration-300
-                "
-                style={{ animationDelay: `${index * 150}ms` }}
-              >
-                <div className="
-                  w-2 h-2 
-                  bg-gradient-to-r from-[#8C7FE9] to-[#C19CFF] 
-                  rounded-full 
-                  mt-1.5 mr-3 
-                  flex-shrink-0
-                  group-hover/item:scale-150
-                  transition-transform duration-300
-                "></div>
-                <span className="
-                  leading-relaxed 
-                  font-light
-                  group-hover/item:translate-x-2 
-                  group-hover/item:text-[#342B7C]
-                  transition-all duration-300
-                ">
-                  {symptom}
-                </span>
-              </li>
-            ))}
-            {disease.symptoms.length > 3 && (
-              <li className="
-                text-xs 
-                text-[#8C7FE9] 
-                font-semibold 
-                pt-2 
-                flex items-center space-x-1
-                group/more
-                hover:translate-x-1
-                transition-transform duration-300
-              ">
-                <span>+{disease.symptoms.length - 3} síntomas más</span>
-                <FaArrowRight className="w-2 h-2 transform group-hover/more:translate-x-1 transition-transform duration-300" />
-              </li>
-            )}
-          </ul>
-        </div>
-
-        {/* Footer Premium */}
-        <div className="mt-6 pt-5 border-t border-[#342B7C]/10 flex justify-between items-center relative z-10">
-          <div className="flex items-center space-x-2">
-            <FaUserMd className="w-3 h-3 text-[#8C7FE9]" />
-            <span className="text-xs text-[#342B7C]/60 font-semibold">
-              {disease.specialty}
-            </span>
-          </div>
-          <button className="
-            inline-flex items-center space-x-2 
-            text-sm font-semibold 
-            text-[#342B7C] 
-            hover:text-[#8C7FE9] 
-            group/btn
-            transition-all duration-500 
-            hover:translate-x-1
-            px-4 py-2
-            rounded-xl
-            hover:bg-white/50
-            backdrop-blur-sm
-          ">
-            <span>Ver detalles</span>
-            <FaArrowRight className="
-              w-3 h-3 
-              transform 
-              group-hover/btn:translate-x-1 
-              transition-transform duration-300
-            " />
-          </button>
-        </div>
       </div>
 
-      {/* Efectos de brillo y partículas */}
-      <div className="
-        absolute inset-0 
-        rounded-3xl 
-        bg-gradient-to-br from-[#8C7FE9]/0 via-[#C19CFF]/0 to-[#342B7C]/0 
-        opacity-0 
-        group-hover:opacity-10 
-        transition-opacity duration-700 
-        pointer-events-none
-      "></div>
-      
-      {/* Partículas flotantes */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        {[...Array(3)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute animate-float-slow opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-            style={{
-              top: `${20 + i * 25}%`,
-              left: `${10 + i * 30}%`,
-              animationDelay: `${i * 2}s`,
-            }}
+      {/* Contenido - Padding 20px (1.25rem) según UX/UI standards */}
+      <div className="p-5">
+        
+        {/* Severidad badge */}
+        <div className="mb-4">
+          <div 
+            className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg ${severityConfig.bg} border`}
+            style={{ borderColor: severityConfig.color }}
           >
-            <div className="w-1 h-1 bg-[#8C7FE9] rounded-full"></div>
+            <SeverityIcon className="w-3.5 h-3.5" style={{ color: severityConfig.color }} />
+            <span className={`text-xs font-bold ${severityConfig.text}`} style={{ letterSpacing: '0.3px' }}>
+              SEVERIDAD: {disease.severity.toUpperCase()}
+            </span>
           </div>
-        ))}
+        </div>
+
+        {/* Descripción - Line height 1.6 para legibilidad */}
+        <p className="text-neutral-600 dark:text-neutral-400 dark:text-neutral-500 text-sm leading-relaxed mb-4 line-clamp-2" style={{ lineHeight: '1.6' }}>
+          {disease.description}
+        </p>
+
+        {/* Metadata grid */}
+        <div className="space-y-2 pb-4 mb-4 border-b border-neutral-100 dark:border-neutral-800">
+          {disease.specialty && (
+            <div className="flex items-center gap-2 text-xs text-neutral-600 dark:text-neutral-400 dark:text-neutral-500">
+              <FaUserMd className="w-3.5 h-3.5 text-[#A8D32C] flex-shrink-0" />
+              <span className="font-medium">{disease.specialty}</span>
+            </div>
+          )}
+          {disease.prevalence && (
+            <div className="flex items-center gap-2 text-xs text-neutral-600 dark:text-neutral-400 dark:text-neutral-500">
+              <FaChartLine className="w-3.5 h-3.5 text-[#A8D32C] flex-shrink-0" />
+              <span className="font-medium">Prevalencia: {disease.prevalence}</span>
+            </div>
+          )}
+        </div>
+
+        {/* CTA Button - Height 44px (estándar móvil touch target) */}
+        <button 
+          className="w-full h-11 flex items-center justify-center gap-2 rounded-lg font-semibold text-sm text-white transition-all duration-300 group-hover:shadow-lg dark:hover:shadow-neutral-900/50"
+          style={{ backgroundColor: '#A8D32C' }}
+        >
+          <span style={{ letterSpacing: '0.3px' }}>VER DETALLES</span>
+          <FaArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />
+        </button>
       </div>
-    </div>
+    </article>
   );
 };
 
