@@ -41,21 +41,23 @@ const Retrain = () => {
 
   const loadValidatedImages = () => {
     try {
-      const history = JSON.parse(localStorage.getItem('dermapp_history') || '[]');
-      // Las imágenes del historial YA ESTÁN validadas por el usuario al haberlas analizado
-      const validated = history.map(item => ({
+      const validated = JSON.parse(localStorage.getItem('dermapp_validated') || '[]');
+      
+      // Solo cargar las imágenes VALIDADAS (no rechazadas)
+      const validatedImages = validated.map(item => ({
         id: item.id,
-        timestamp: item.timestamp,
+        timestamp: item.validatedAt,
         diagnosis: item.diagnosis,
         confidence: item.confidence,
         image: item.image,
-        validated: true, // Ya están validadas por defecto
-        validatedBy: 'Usuario',
-        validatedAt: item.timestamp,
-        correctDiagnosis: item.diagnosis,
-        processingTime: item.processingTime || 'N/A'
+        validated: true,
+        validatedBy: item.validatedBy || 'Usuario',
+        validatedAt: item.validatedAt,
+        correctDiagnosis: item.correctDiagnosis || item.diagnosis,
+        processingTime: 'N/A'
       }));
-      setValidatedImages(validated);
+      
+      setValidatedImages(validatedImages);
     } catch (e) {
       console.error('Error loading validated images:', e);
     }
@@ -105,12 +107,36 @@ const Retrain = () => {
   const handleStartRetraining = async () => {
     const validatedCount = validatedImages.filter(img => img.validated).length;
     
-    if (validatedCount < 5) {
-      alert('Se necesitan al menos 5 imágenes validadas para reentrenar el modelo.');
+    // Contar imágenes por enfermedad
+    const diseaseCount = {};
+    validatedImages.forEach(img => {
+      if (img.validated) {
+        diseaseCount[img.diagnosis] = (diseaseCount[img.diagnosis] || 0) + 1;
+      }
+    });
+    
+    // Verificar si alguna enfermedad tiene al menos 100 imágenes
+    const maxDisease = Object.entries(diseaseCount).reduce((max, [disease, count]) => {
+      return count > (max.count || 0) ? { disease, count } : max;
+    }, {});
+    
+    if (maxDisease.count < 100) {
+      alert(
+        `Se necesitan al menos 100 imágenes de la misma enfermedad para iniciar el reentrenamiento.\n\n` +
+        `Actualmente tienes:\n` +
+        Object.entries(diseaseCount)
+          .sort((a, b) => b[1] - a[1])
+          .map(([disease, count]) => `• ${disease}: ${count} imagen(es)`)
+          .join('\n') +
+        `\n\nLa enfermedad con más imágenes es "${maxDisease.disease}" con ${maxDisease.count} validada(s).`
+      );
       return;
     }
 
-    if (!window.confirm(`¿Iniciar reentrenamiento con ${validatedCount} imágenes validadas?`)) {
+    if (!window.confirm(
+      `¿Iniciar reentrenamiento con ${validatedCount} imágenes validadas?\n\n` +
+      `Enfermedad principal: ${maxDisease.disease} (${maxDisease.count} imágenes)`
+    )) {
       return;
     }
 
@@ -348,7 +374,7 @@ const Retrain = () => {
                 Insuficientes muestras validadas
               </p>
               <p className="text-sm text-amber-700">
-                Se necesitan al menos 5 imágenes validadas para iniciar el reentrenamiento. 
+                Se necesitan al menos 100 imágenes validadas para iniciar el reentrenamiento. 
                 Actualmente tienes {validatedImages.filter(img => img.validated).length} validada(s).
               </p>
             </div>

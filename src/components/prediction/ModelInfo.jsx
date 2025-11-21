@@ -1,4 +1,4 @@
-﻿import React from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { 
   FaBrain, 
   FaDatabase, 
@@ -15,7 +15,39 @@ import {
 } from 'react-icons/fa';
 
 const ModelInfo = ({ version, loading, error, labels }) => {
-    if (loading || error) return null;
+  const [realtimeStats, setRealtimeStats] = useState({
+    totalPredictions: 0,
+    avgInferenceTime: 0,
+    lastPrediction: null
+  });
+
+  useEffect(() => {
+    // Actualizar estadísticas en tiempo real
+    const updateStats = () => {
+      try {
+        const history = JSON.parse(localStorage.getItem('dermapp_history') || '[]');
+        
+        if (history.length > 0) {
+          const avgTime = history.reduce((sum, item) => 
+            sum + parseFloat(item.processingTime || 0), 0) / history.length;
+          
+          setRealtimeStats({
+            totalPredictions: history.length,
+            avgInferenceTime: Math.round(avgTime),
+            lastPrediction: history[0]?.timestamp || null
+          });
+        }
+      } catch (e) {
+        console.error('Error updating realtime stats:', e);
+      }
+    };
+
+    updateStats();
+    const interval = setInterval(updateStats, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  if (loading || error) return null;
 
   // Calcular información del modelo
   const numClasses = labels?.length || 23;
@@ -31,7 +63,10 @@ const ModelInfo = ({ version, loading, error, labels }) => {
     parameters: '~3.5M',
     lastUpdate: 'Noviembre 2024',
     trainingDataset: 'HAM10000 + ISIC',
-    inferenceTime: '~200-400ms'
+    inferenceTime: realtimeStats.avgInferenceTime > 0 
+      ? `~${realtimeStats.avgInferenceTime}ms` 
+      : '~200-400ms',
+    totalPredictions: realtimeStats.totalPredictions
   };
 
   return (
@@ -213,29 +248,68 @@ const ModelInfo = ({ version, loading, error, labels }) => {
                     Velocidad
                   </p>
                   <p className="text-lg font-bold text-neutral-900 dark:text-white">{modelSpecs.inferenceTime}</p>
-                  <p className="text-xs text-neutral-600 dark:text-neutral-400 dark:text-neutral-500 mt-1">Tiempo de inferencia</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Última actualización */}
-            <div className="group bg-white dark:bg-neutral-900 hover:bg-gradient-to-br hover:from-pink-50 hover:to-white rounded-xl p-5 border-2 border-neutral-200 dark:border-neutral-700 hover:border-pink-300 shadow-sm hover:shadow-lg dark:hover:shadow-neutral-900/50 transition-all duration-300">
-              <div className="flex items-start gap-3">
-                <div className="w-12 h-12 rounded-xl bg-pink-500 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                  <FaClock className="w-6 h-6 text-white" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 dark:text-neutral-500 mb-1">
-                    Última Actualización
+                  <p className="text-xs text-neutral-600 dark:text-neutral-400 dark:text-neutral-500 mt-1">
+                    {realtimeStats.totalPredictions > 0 
+                      ? `Promedio de ${realtimeStats.totalPredictions} predicciones` 
+                      : 'Tiempo de inferencia'}
                   </p>
-                  <p className="text-lg font-bold text-neutral-900 dark:text-white">{modelSpecs.lastUpdate}</p>
-                  <p className="text-xs text-neutral-600 dark:text-neutral-400 dark:text-neutral-500 mt-1">Versión estable</p>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Sección de Estadísticas en Tiempo Real */}
+      {realtimeStats.totalPredictions > 0 && (
+        <div className="bg-gradient-to-br from-[#A8D32C]/10 to-white rounded-2xl border-2 border-[#C5E86C] shadow-xl dark:shadow-neutral-900/50 p-6">
+          <h3 className="text-xl font-bold text-neutral-900 dark:text-white mb-4 flex items-center gap-2" 
+              style={{ fontFamily: 'Poppins, sans-serif' }}>
+            <FaChartLine className="w-5 h-5" style={{ color: '#A8D32C' }} />
+            Estadísticas en Tiempo Real
+          </h3>
+          
+          <div className="grid md:grid-cols-3 gap-4">
+            <div className="bg-white dark:bg-neutral-900 rounded-xl p-4 border-2 border-neutral-200 dark:border-neutral-700">
+              <div className="flex items-center justify-between mb-2">
+                <FaBrain className="w-8 h-8 text-[#A8D32C]" />
+                <span className="text-3xl font-bold text-[#A8D32C]">{realtimeStats.totalPredictions}</span>
+              </div>
+              <p className="text-sm font-bold text-neutral-700 dark:text-neutral-300">Total de Predicciones</p>
+              <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-1">En esta sesión</p>
+            </div>
+
+            <div className="bg-white dark:bg-neutral-900 rounded-xl p-4 border-2 border-neutral-200 dark:border-neutral-700">
+              <div className="flex items-center justify-between mb-2">
+                <FaClock className="w-8 h-8 text-blue-500" />
+                <span className="text-3xl font-bold text-blue-600">{realtimeStats.avgInferenceTime}ms</span>
+              </div>
+              <p className="text-sm font-bold text-neutral-700 dark:text-neutral-300">Tiempo Promedio</p>
+              <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-1">Por predicción</p>
+            </div>
+
+            <div className="bg-white dark:bg-neutral-900 rounded-xl p-4 border-2 border-neutral-200 dark:border-neutral-700">
+              <div className="flex items-center justify-between mb-2">
+                <FaCheckCircle className="w-8 h-8 text-emerald-500" />
+                <span className="text-sm font-bold text-emerald-600">
+                  {realtimeStats.lastPrediction 
+                    ? new Date(realtimeStats.lastPrediction).toLocaleTimeString('es-ES', { 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                      })
+                    : 'N/A'}
+                </span>
+              </div>
+              <p className="text-sm font-bold text-neutral-700 dark:text-neutral-300">Última Predicción</p>
+              <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-1">
+                {realtimeStats.lastPrediction 
+                  ? new Date(realtimeStats.lastPrediction).toLocaleDateString('es-ES')
+                  : 'Sin datos'}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Capacidades del Modelo */}
       <div className="bg-white dark:bg-neutral-900 rounded-2xl p-8 border-2 border-neutral-200 dark:border-neutral-700 shadow-lg">

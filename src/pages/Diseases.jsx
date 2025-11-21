@@ -163,7 +163,7 @@ const Diseases = () => {
                   className="w-full pl-12 pr-4 py-3 border-2 border-neutral-200 dark:border-neutral-700 rounded-xl focus:border-[#A8D32C] focus:outline-none appearance-none transition-all duration-200"
                   style={{ fontFamily: 'Inter, sans-serif' }}
                 >
-                  <option key="all" value="all">Todas las categorías</option>
+                  <option value="all">Todas las categorías</option>
                   {categories.filter(cat => cat !== 'all').map(category => (
                     <option key={category} value={category}>
                       {category}

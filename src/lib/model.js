@@ -1,9 +1,214 @@
 // src/lib/model.js
 import * as tf from '@tensorflow/tfjs';
 
+// Cache key para IndexedDB
+const MODEL_CACHE_KEY = 'dermnet_model_cache';
+const CACHE_VERSION = 'v1.0';
+
+// Función para guardar en cache (IndexedDB)
+async function saveModelToCache(modelArtifacts) {
+  try {
+    console.log('💾 Guardando modelo en caché...');
+    const cacheData = {
+      version: CACHE_VERSION,
+      timestamp: Date.now(),
+      artifacts: modelArtifacts
+    };
+    localStorage.setItem(MODEL_CACHE_KEY + '_meta', JSON.stringify({
+      version: CACHE_VERSION,
+      timestamp: Date.now()
+    }));
+    // Usar tf.io.browserLocalStorage para guardar el modelo
+    await tf.io.browserLocalStorage(MODEL_CACHE_KEY).save(modelArtifacts);
+    console.log('✅ Modelo guardado en caché exitosamente');
+  } catch (e) {
+    console.warn('⚠️ No se pudo guardar en caché:', e.message);
+  }
+}
+
+// Función para cargar desde cache
+async function loadModelFromCache() {
+  try {
+    console.log('📂 Buscando modelo en caché...');
+    const meta = localStorage.getItem(MODEL_CACHE_KEY + '_meta');
+    if (!meta) {
+      console.log('❌ No hay caché disponible');
+      return null;
+    }
+    
+    const { version, timestamp } = JSON.parse(meta);
+    if (version !== CACHE_VERSION) {
+      console.log('❌ Versión de caché obsoleta');
+      return null;
+    }
+    
+    // Cache válido por 7 días
+    const cacheAge = Date.now() - timestamp;
+    if (cacheAge > 7 * 24 * 60 * 60 * 1000) {
+      console.log('❌ Caché expirado');
+      return null;
+    }
+    
+    console.log('✅ Caché encontrado, cargando...');
+    const artifacts = await tf.io.browserLocalStorage(MODEL_CACHE_KEY).load();
+    console.log('✅ Modelo cargado desde caché');
+    return artifacts;
+  } catch (e) {
+    console.warn('⚠️ Error cargando desde caché:', e.message);
+    return null;
+  }
+}
+
+// Función para convertir inbound_nodes de Keras 3.x a TensorFlow.js
+function convertInboundNodes(nodes) {
+  if (!nodes || !Array.isArray(nodes) || nodes.length === 0) {
+    return [];
+  }
+  
+  const converted = [];
+  
+  for (const node of nodes) {
+    // Si ya es array de arrays, no convertir
+    if (Array.isArray(node[0])) {
+      converted.push(node);
+      continue;
+    }
+    
+    // Convertir formato Keras 3.x
+    if (node.args && Array.isArray(node.args)) {
+      const nodeInputs = [];
+      
+      for (const arg of node.args) {
+        if (Array.isArray(arg)) {
+          // Array de tensores (como en Add layer)
+          for (const subArg of arg) {
+            if (subArg?.class_name === '__keras_tensor__' && subArg.config?.keras_history) {
+              nodeInputs.push(subArg.config.keras_history);
+            }
+          }
+        } else if (arg?.class_name === '__keras_tensor__' && arg.config?.keras_history) {
+          // Tensor individual
+          nodeInputs.push(arg.config.keras_history);
+        }
+      }
+      
+      if (nodeInputs.length > 0) {
+        converted.push(nodeInputs);
+      }
+    }
+  }
+  
+  return converted;
+}
+
+// Función para procesar layers recursivamente (incluye anidados)
+function fixLayersRecursive(layers) {
+  return layers.map(layer => {
+    // Fix 1: batch_shape → batchInputShape
+    if (layer.class_name === 'InputLayer' && layer.config?.batch_shape) {
+      layer.config.batchInputShape = layer.config.batch_shape;
+      delete layer.config.batch_shape;
+    }
+    
+    // Fix 2: inbound_nodes
+    if (layer.inbound_nodes) {
+      layer.inbound_nodes = convertInboundNodes(layer.inbound_nodes);
+    }
+    
+    // Fix 3: Layers anidados (recursivo para Functional models)
+    if (layer.config?.layers && Array.isArray(layer.config.layers)) {
+      layer.config.layers = fixLayersRecursive(layer.config.layers);
+    }
+    
+    return layer;
+  });
+}
+
 export async function loadModelFrom(manifest, version) {
-  const url = `/models/${version}/model.json`;
-  const model = await tf.loadLayersModel(url);
+  // Intentar cargar desde caché primero
+  const cachedArtifacts = await loadModelFromCache();
+  if (cachedArtifacts) {
+    console.log('🚀 Usando modelo desde caché (carga instantánea)');
+    const model = await tf.loadLayersModel(tf.io.fromMemory(cachedArtifacts));
+    return model;
+  }
+  
+  const baseUrl = `/models/${version}`;
+  const modelUrl = `${baseUrl}/model.json`;
+  
+  console.log('🔄 Cargando modelo con Keras 3.x compatibility layer v3...');
+  
+  // Custom HTTP IOHandler para Keras 3.x
+  const customHandler = {
+    async load() {
+      console.log('📥 Descargando model.json...');
+      const response = await fetch(modelUrl);
+      const modelArtifacts = await response.json();
+      
+      console.log('🔧 Convirtiendo formato Keras 3.x → TensorFlow.js (recursivo)...');
+      // FIX: Convertir TODOS los layers (incluidos anidados)
+      if (modelArtifacts.modelTopology?.model_config?.config?.layers) {
+        const layersBefore = JSON.stringify(modelArtifacts.modelTopology.model_config.config.layers).length;
+        modelArtifacts.modelTopology.model_config.config.layers = 
+          fixLayersRecursive(modelArtifacts.modelTopology.model_config.config.layers);
+        const layersAfter = JSON.stringify(modelArtifacts.modelTopology.model_config.config.layers).length;
+        console.log(`✅ Procesados ${modelArtifacts.modelTopology.model_config.config.layers.length} layers principales`);
+        console.log(`📊 Tamaño topology: ${(layersBefore/1024).toFixed(1)}KB → ${(layersAfter/1024).toFixed(1)}KB`);
+      }
+      
+      console.log('📥 Descargando weights...');
+      // Cargar weights
+      const weightsManifest = modelArtifacts.weightsManifest;
+      const weightSpecs = [];
+      const weightData = [];
+      
+      for (const group of weightsManifest) {
+        weightSpecs.push(...group.weights);
+        
+        for (const path of group.paths) {
+          const weightResponse = await fetch(`${baseUrl}/${path}`);
+          const buffer = await weightResponse.arrayBuffer();
+          weightData.push(buffer);
+          console.log(`  ✓ ${path} (${(buffer.byteLength / 1024 / 1024).toFixed(1)} MB)`);
+        }
+      }
+      
+      // Concatenar todos los buffers
+      const totalBytes = weightData.reduce((sum, buf) => sum + buf.byteLength, 0);
+      const concatenatedBuffer = new ArrayBuffer(totalBytes);
+      const concatenatedArray = new Uint8Array(concatenatedBuffer);
+      
+      let offset = 0;
+      for (const buffer of weightData) {
+        concatenatedArray.set(new Uint8Array(buffer), offset);
+        offset += buffer.byteLength;
+      }
+      
+      console.log(`✅ Weights cargados: ${(totalBytes / 1024 / 1024).toFixed(1)} MB total`);
+      
+      return {
+        modelTopology: modelArtifacts.modelTopology,
+        weightSpecs: weightSpecs,
+        weightData: concatenatedBuffer,
+        format: modelArtifacts.format,
+        generatedBy: modelArtifacts.generatedBy,
+        convertedBy: modelArtifacts.convertedBy
+      };
+    }
+  };
+  
+  console.log('🧠 Deserializando modelo...');
+  const model = await tf.loadLayersModel(customHandler);
+  console.log('✅ Modelo cargado exitosamente con compatibility layer');
+  
+  // Guardar en caché para próximas cargas
+  try {
+    const artifacts = await customHandler.load();
+    await saveModelToCache(artifacts);
+  } catch (e) {
+    console.warn('⚠️ No se pudo cachear el modelo:', e.message);
+  }
+  
   return model;
 }
 

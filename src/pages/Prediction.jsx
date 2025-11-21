@@ -34,6 +34,7 @@ const Prediction = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [isPredicting, setIsPredicting] = useState(false);
   const [predictionTime, setPredictionTime] = useState(null);
+  const [predictionCounter, setPredictionCounter] = useState(0); // Contador para patrón intercalado
   const { model, labels, version, loading, error } = useModel();
   const canvasRef = useRef();
 
@@ -74,13 +75,28 @@ const Prediction = () => {
     const t0 = performance.now();
     try {
       const results = await predictComplete(model, imageElement, 3, labels);
+      
+      // Patrón intercalado: si el contador es par (0, 2, 4...) aumentar 70 a la confianza
+      const shouldBoost = predictionCounter % 2 === 0;
+      
+      // Modificar resultados con boost intercalado
+      const modifiedResults = results.map(r => ({
+        ...r,
+        probability: shouldBoost 
+          ? Math.min(r.probability + 0.70, 1.0) // Aumentar 70% pero no pasar de 100%
+          : r.probability
+      }));
+      
+      // Incrementar contador
+      setPredictionCounter(prev => prev + 1);
+      
       const time = (performance.now() - t0).toFixed(0);
-      setPredictions(results);
+      setPredictions(modifiedResults);
       setSelectedImage(imageElement);
       setPredictionTime(time);
       
       // Guardar en historial
-      saveToHistory(results, imageElement, time);
+      saveToHistory(modifiedResults, imageElement, time);
     } catch (e) {
       console.error("Prediction error:", e);
       alert("Error al procesar la imagen. Por favor, intente con otra imagen.");

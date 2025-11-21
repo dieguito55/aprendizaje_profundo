@@ -1,4 +1,4 @@
-﻿import React from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { 
   FaChartBar, 
   FaCheckCircle, 
@@ -9,15 +9,78 @@ import {
 } from 'react-icons/fa';
 
 const Statistics = () => {
-  // Datos ficticios de estadísticas (en producción vendrían del backend o localStorage)
-  const stats = {
-    totalAnalyses: 127,
-    avgConfidence: 87.3,
-    avgProcessingTime: 234,
-    mostCommon: 'Melanoma',
-    todayAnalyses: 5,
-    successRate: 94.5
-  };
+  const [stats, setStats] = useState({
+    totalAnalyses: 0,
+    avgConfidence: 0,
+    avgProcessingTime: 0,
+    mostCommon: 'N/A',
+    todayAnalyses: 0,
+    successRate: 0
+  });
+
+  useEffect(() => {
+    // Cargar estadísticas desde localStorage
+    const calculateStats = () => {
+      try {
+        const history = JSON.parse(localStorage.getItem('dermapp_history') || '[]');
+        
+        if (history.length === 0) {
+          return;
+        }
+
+        // Total de análisis
+        const totalAnalyses = history.length;
+
+        // Confianza promedio
+        const avgConfidence = history.reduce((sum, item) => 
+          sum + parseFloat(item.confidence || 0), 0) / totalAnalyses;
+
+        // Tiempo de procesamiento promedio
+        const avgProcessingTime = history.reduce((sum, item) => 
+          sum + parseFloat(item.processingTime || 0), 0) / totalAnalyses;
+
+        // Diagnóstico más común
+        const diagnosisCounts = {};
+        history.forEach(item => {
+          const diagnosis = item.diagnosis || 'Desconocido';
+          diagnosisCounts[diagnosis] = (diagnosisCounts[diagnosis] || 0) + 1;
+        });
+        const mostCommon = Object.keys(diagnosisCounts).reduce((a, b) => 
+          diagnosisCounts[a] > diagnosisCounts[b] ? a : b, 'N/A');
+
+        // Análisis de hoy
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const todayAnalyses = history.filter(item => {
+          const itemDate = new Date(item.timestamp);
+          itemDate.setHours(0, 0, 0, 0);
+          return itemDate.getTime() === today.getTime();
+        }).length;
+
+        // Tasa de éxito (análisis con confianza > 70%)
+        const successfulAnalyses = history.filter(item => 
+          parseFloat(item.confidence || 0) > 70).length;
+        const successRate = (successfulAnalyses / totalAnalyses) * 100;
+
+        setStats({
+          totalAnalyses,
+          avgConfidence: avgConfidence.toFixed(1),
+          avgProcessingTime: Math.round(avgProcessingTime),
+          mostCommon,
+          todayAnalyses,
+          successRate: successRate.toFixed(1)
+        });
+      } catch (e) {
+        console.error('Error calculating stats:', e);
+      }
+    };
+
+    calculateStats();
+    
+    // Actualizar cada 5 segundos
+    const interval = setInterval(calculateStats, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-700 shadow-sm">

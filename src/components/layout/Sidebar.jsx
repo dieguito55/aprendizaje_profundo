@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/useAuth';
@@ -30,6 +30,46 @@ const Sidebar = ({ isOpen, onClose }) => {
   const { isDark, toggleTheme } = useTheme();
   const { isAuthenticated, user, logout } = useAuth();
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [notificationCount, setNotificationCount] = useState(0);
+
+  // Actualizar contador de notificaciones en tiempo real
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setNotificationCount(0);
+      return;
+    }
+
+    const updateNotifications = () => {
+      try {
+        const history = JSON.parse(localStorage.getItem('dermapp_history') || '[]');
+        const validated = JSON.parse(localStorage.getItem('dermapp_validated') || '[]');
+        const rejected = JSON.parse(localStorage.getItem('dermapp_rejected') || '[]');
+        
+        const validatedIds = validated.map(v => v.id);
+        const rejectedIds = rejected.map(r => r.id);
+        
+        const pendingCount = history.filter(item => {
+          const confidence = parseFloat(item.confidence);
+          return confidence >= 80 && 
+                 !validatedIds.includes(item.id) && 
+                 !rejectedIds.includes(item.id);
+        }).length;
+        
+        setNotificationCount(pendingCount);
+      } catch (e) {
+        console.error('Error updating notifications:', e);
+      }
+    };
+
+    updateNotifications();
+    const interval = setInterval(updateNotifications, 3000);
+    window.addEventListener('storage', updateNotifications);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', updateNotifications);
+    };
+  }, [isAuthenticated]);
 
   const handleLinkClick = () => {
     if (window.innerWidth < 1024) {
@@ -239,45 +279,55 @@ const Sidebar = ({ isOpen, onClose }) => {
         </nav>
 
         {/* Sección de Notificaciones */}
-        <div className="p-2.5 border-t border-neutral-100 dark:border-neutral-800 flex-shrink-0">
-          <div className="bg-white dark:bg-neutral-900 border-2 border-[#C5E86C] rounded-xl p-2.5 shadow-sm hover:shadow-md hover:border-primary-300 transition-all duration-300 cursor-pointer">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <div className="relative">
-                  <div className="p-1.5 bg-[#A8D32C] rounded-lg shadow-sm">
-                    <FaBell className="text-white text-sm" />
-                  </div>
-                  {/* Indicador de notificaciones pendientes - Dinámico */}
-                  {/* {notificationCount > 0 && (
-                    <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full border-2 border-white flex items-center justify-center">
-                      <span className="text-white text-[8px] font-bold">{notificationCount}</span>
+        {isAuthenticated && (
+          <div className="p-2.5 border-t border-neutral-100 dark:border-neutral-800 flex-shrink-0">
+            <Link 
+              to="/analizar"
+              onClick={handleLinkClick}
+              className={`block bg-white dark:bg-neutral-900 border-2 rounded-xl p-2.5 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer ${
+                notificationCount > 0 
+                  ? 'border-red-400 hover:border-red-500 bg-red-50/50 dark:bg-red-900/10' 
+                  : 'border-[#C5E86C] hover:border-primary-300'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <div className="relative">
+                    <div className={`p-1.5 rounded-lg shadow-sm ${
+                      notificationCount > 0 ? 'bg-red-500' : 'bg-[#A8D32C]'
+                    }`}>
+                      <FaBell className="text-white text-sm" />
                     </div>
-                  )} */}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-neutral-900 dark:text-white font-bold text-[10px]" style={{ fontFamily: 'Poppins, sans-serif' }}>Notificaciones</h3>
-                  <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-500 text-[9px] font-medium" style={{ fontFamily: 'Inter, sans-serif' }}>Sin notificaciones</p>
-                  {/* Mostrar dinámicamente: {notificationCount} nueva{notificationCount !== 1 ? 's' : ''} */}
+                    {notificationCount > 0 && (
+                      <>
+                        <div className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 rounded-full border-2 border-white flex items-center justify-center px-1">
+                          <span className="text-white text-[9px] font-bold">
+                            {notificationCount > 99 ? '99+' : notificationCount}
+                          </span>
+                        </div>
+                        <span className="absolute -top-1 -right-1 flex h-[18px] w-[18px]">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        </span>
+                      </>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-neutral-900 dark:text-white font-bold text-[10px]" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                      Notificaciones
+                    </h3>
+                    <p className={`text-[9px] font-medium ${
+                      notificationCount > 0 ? 'text-red-600 dark:text-red-400' : 'text-neutral-500 dark:text-neutral-400'
+                    }`} style={{ fontFamily: 'Inter, sans-serif' }}>
+                      {notificationCount > 0 
+                        ? `${notificationCount} pendiente${notificationCount !== 1 ? 's' : ''}` 
+                        : 'Sin notificaciones'}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-            
-            {/* Lista de notificaciones - Renderizar dinámicamente */}
-            {/* {notifications.length > 0 && (
-              <div className="space-y-1.5 mt-2">
-                {notifications.slice(0, 1).map((notification, index) => (
-                  <div key={index} className="flex items-start space-x-1.5 p-1.5 bg-[#A8D32C]/10 rounded-lg border border-primary-100">
-                    <FaHeartbeat className="text-[#A8D32C] text-[9px] flex-shrink-0 mt-0.5" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-neutral-700 dark:text-neutral-300 text-[9px] font-semibold leading-tight" style={{ fontFamily: 'Inter, sans-serif' }}>{notification.message}</p>
-                      <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-500 text-[8px] mt-0.5">{notification.time}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )} */}
+            </Link>
           </div>
-        </div>
+        )}
 
         {/* Sección de Estado del Sistema */}
         <div className={`p-2.5 border-t flex-shrink-0 ${isDark ? 'border-neutral-800' : 'border-neutral-100 dark:border-neutral-800'}`}>
@@ -353,7 +403,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         <div className={`p-2.5 border-t flex-shrink-0 ${isDark ? 'bg-neutral-900 border-neutral-800' : 'bg-white dark:bg-neutral-900 border-neutral-100 dark:border-neutral-800'}`}>
           <div className="text-center">
             <p className={`text-[9px] font-medium mb-0.5 ${isDark ? 'text-neutral-400 dark:text-neutral-500' : 'text-neutral-500 dark:text-neutral-400 dark:text-neutral-500'}`} style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '0.02em' }}>DermApp Professional</p>
-            <p className={`text-[8px] ${isDark ? 'text-neutral-600 dark:text-neutral-400 dark:text-neutral-500' : 'text-neutral-400 dark:text-neutral-500'}`} style={{ fontFamily: 'Inter, sans-serif' }}>Version 2.1.0</p>
+            <p className={`text-[8px] ${isDark ? 'text-neutral-600 dark:text-neutral-400 dark:text-neutral-500' : 'text-neutral-400 dark:text-neutral-500'}`} style={{ fontFamily: 'Inter, sans-serif' }}>Version 1.0.0</p>
             <div className="flex justify-center space-x-1 mt-1.5">
               <div className="w-1 h-1 bg-[#A8D32C] rounded-full animate-pulse" style={{animationDelay: '0s'}}></div>
               <div className="w-1 h-1 bg-primary-400 rounded-full animate-pulse" style={{animationDelay: '0.2s'}}></div>

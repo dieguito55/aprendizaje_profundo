@@ -7,8 +7,22 @@ import {
   FaSyncAlt,
   FaFileExport,
   FaAward,
-  FaInfoCircle
+  FaInfoCircle,
+  FaImage
 } from 'react-icons/fa';
+import { DISEASES_DATA } from '../../data/diseases';
+
+// Función helper para obtener el ID de la enfermedad por nombre
+const getDiseaseIdByName = (diseaseName) => {
+  if (!diseaseName) return 0;
+  
+  const disease = DISEASES_DATA.find(d => 
+    d.name.toLowerCase().includes(diseaseName.toLowerCase()) ||
+    diseaseName.toLowerCase().includes(d.name.toLowerCase())
+  );
+  
+  return disease ? disease.id : 0;
+};
 
 const ResultsPanel = ({ predictions, onNewAnalysis }) => {
     if (!predictions || !Array.isArray(predictions) || predictions.length === 0) {
@@ -83,6 +97,29 @@ const ResultsPanel = ({ predictions, onNewAnalysis }) => {
                 style={{ fontFamily: 'Poppins, sans-serif' }}>
               {topPrediction.className || 'No disponible'}
             </h4>
+          </div>
+
+          {/* Imagen de Referencia de la Enfermedad */}
+          <div className="bg-neutral-50 dark:bg-neutral-800 rounded-lg p-4 border border-neutral-200 dark:border-neutral-700">
+            <div className="flex items-center gap-2 mb-3">
+              <FaImage className="w-4 h-4 text-[#A8D32C]" />
+              <p className="text-xs font-bold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
+                Imagen de Referencia
+              </p>
+            </div>
+            <div className="relative aspect-video rounded-lg overflow-hidden bg-neutral-200 dark:bg-neutral-700">
+              <img 
+                src={`/images/diseases/${getDiseaseIdByName(topPrediction.className)}.jpg`}
+                alt={topPrediction.className}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.target.src = '/images/diseases/0.jpg';
+                }}
+              />
+            </div>
+            <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-2 text-center">
+              Imagen médica de referencia: {topPrediction.className}
+            </p>
           </div>
 
           {/* Confianza - Compacto y Responsive */}

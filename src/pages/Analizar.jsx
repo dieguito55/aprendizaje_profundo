@@ -10,34 +10,116 @@ import {
 } from 'react-icons/fa';
 
 const Analizar = () => {
-    const [activeTab, setActiveTab] = useState('all');
+  const [activeTab, setActiveTab] = useState('all');
   const [filterQuality, setFilterQuality] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('date');
   const [selectedImage, setSelectedImage] = useState(null);
+  const [pendingImages, setPendingImages] = useState([]);
+  const [approvedImages, setApprovedImages] = useState([]);
+  const [rejectedImages, setRejectedImages] = useState([]);
+  const [rejectReason, setRejectReason] = useState('');
 
-  // Mock data expandido - Imágenes pendientes
-  const pendingImages = [
-    { id: 1, disease: 'Melanoma Maligno', confidence: 94, priority: 'high', date: '2024-11-21 14:30', specialist: 'Dr. García', img: '/derma1.png', aiVersion: 'v2.3' },
-    { id: 2, disease: 'Nevus Melanocítico', confidence: 88, priority: 'medium', date: '2024-11-21 13:15', specialist: 'Dra. Martínez', img: '/derma2.png', aiVersion: 'v2.3' },
-    { id: 3, disease: 'Queratosis Seborreica', confidence: 91, priority: 'medium', date: '2024-11-21 12:00', specialist: 'Dr. López', img: '/derma3.png', aiVersion: 'v2.2' },
-    { id: 4, disease: 'Carcinoma Basocelular', confidence: 96, priority: 'high', date: '2024-11-21 11:30', specialist: 'Dra. Rodríguez', img: '/derma4.png', aiVersion: 'v2.3' },
-    { id: 5, disease: 'Dermatitis Atópica', confidence: 87, priority: 'low', date: '2024-11-21 10:00', specialist: 'Dr. García', img: '/derma5.png', aiVersion: 'v2.2' },
-    { id: 6, disease: 'Psoriasis', confidence: 89, priority: 'medium', date: '2024-11-21 09:15', specialist: 'Dra. Martínez', img: '/derma6.png', aiVersion: 'v2.3' }
-  ];
+  // Cargar imágenes del historial con confianza >= 80%
+  React.useEffect(() => {
+    loadImagesFromHistory();
+  }, []);
 
-  // Imágenes aprobadas
-  const approvedImages = [
-    { id: 7, disease: 'Melanoma', confidence: 95, date: '2024-11-20', reviewer: 'Dr. García', img: '/derma7.png' },
-    { id: 8, disease: 'Carcinoma Basocelular', confidence: 93, date: '2024-11-20', reviewer: 'Dra. Martínez', img: '/derma8.png' },
-    { id: 9, disease: 'Dermatitis Atópica', confidence: 90, date: '2024-11-19', reviewer: 'Dr. López', img: '/derma9.png' }
-  ];
+  const loadImagesFromHistory = () => {
+    try {
+      const history = JSON.parse(localStorage.getItem('dermapp_history') || '[]');
+      const validatedData = JSON.parse(localStorage.getItem('dermapp_validated') || '[]');
+      const rejectedData = JSON.parse(localStorage.getItem('dermapp_rejected') || '[]');
+      
+      // Filtrar imágenes con confianza >= 80% que no han sido validadas o rechazadas
+      const validatedIds = validatedData.map(v => v.id);
+      const rejectedIds = rejectedData.map(r => r.id);
+      
+      const pending = history
+        .filter(item => {
+          const confidence = parseFloat(item.confidence);
+          return confidence >= 80 && 
+                 !validatedIds.includes(item.id) && 
+                 !rejectedIds.includes(item.id);
+        })
+        .map(item => ({
+          id: item.id,
+          disease: item.diagnosis,
+          confidence: parseFloat(item.confidence),
+          priority: parseFloat(item.confidence) >= 90 ? 'high' : parseFloat(item.confidence) >= 85 ? 'medium' : 'low',
+          date: new Date(item.timestamp).toLocaleString('es-ES'),
+          specialist: 'Sistema IA',
+          img: item.image || '/derma1.png',
+          aiVersion: 'v1.0'
+        }));
+      
+      const approved = validatedData.map(item => ({
+        id: item.id,
+        disease: item.diagnosis,
+        confidence: parseFloat(item.confidence),
+        date: new Date(item.validatedAt).toLocaleDateString('es-ES'),
+        reviewer: item.validatedBy || 'Usuario',
+        img: item.image || '/derma1.png'
+      }));
+      
+      const rejected = rejectedData.map(item => ({
+        id: item.id,
+        disease: item.diagnosis,
+        confidence: parseFloat(item.confidence),
+        reason: item.reason || 'Sin especificar',
+        date: new Date(item.rejectedAt).toLocaleDateString('es-ES'),
+        img: item.image || '/derma1.png'
+      }));
+      
+      setPendingImages(pending);
+      setApprovedImages(approved);
+      setRejectedImages(rejected);
+    } catch (e) {
+      console.error('Error loading images:', e);
+    }
+  };
 
-  // Imágenes rechazadas
-  const rejectedImages = [
-    { id: 10, disease: 'Imagen borrosa', confidence: 76, reason: 'Calidad insuficiente', date: '2024-11-19', img: '/derma1.png' },
-    { id: 11, disease: 'Iluminación deficiente', confidence: 72, reason: 'Condiciones inadecuadas', date: '2024-11-18', img: '/derma2.png' }
-  ];
+  const handleApprove = (image) => {
+    try {
+      const validated = JSON.parse(localStorage.getItem('dermapp_validated') || '[]');
+      const newValidation = {
+        id: image.id,
+        diagnosis: image.disease,
+        confidence: image.confidence,
+        image: image.img,
+        validatedBy: 'Usuario',
+        validatedAt: Date.now(),
+        correctDiagnosis: image.disease
+      };
+      
+      validated.push(newValidation);
+      localStorage.setItem('dermapp_validated', JSON.stringify(validated));
+      loadImagesFromHistory();
+    } catch (e) {
+      console.error('Error approving image:', e);
+    }
+  };
+
+  const handleReject = (image, reason) => {
+    try {
+      const rejected = JSON.parse(localStorage.getItem('dermapp_rejected') || '[]');
+      const newRejection = {
+        id: image.id,
+        diagnosis: image.disease,
+        confidence: image.confidence,
+        image: image.img,
+        rejectedBy: 'Usuario',
+        rejectedAt: Date.now(),
+        reason: reason || 'Sin especificar'
+      };
+      
+      rejected.push(newRejection);
+      localStorage.setItem('dermapp_rejected', JSON.stringify(rejected));
+      loadImagesFromHistory();
+    } catch (e) {
+      console.error('Error rejecting image:', e);
+    }
+  };
 
   const stats = [
     { label: 'Pendientes Calificación', value: pendingImages.length, icon: FaClock, color: 'amber', change: '+3', trend: 'up' },
@@ -137,7 +219,7 @@ const Analizar = () => {
               </div>
               <div>
                 <p className="text-[10px] text-neutral-500 dark:text-neutral-400 dark:text-neutral-500 uppercase tracking-wide font-semibold">Modelo IA</p>
-                <p className="text-xs font-bold text-neutral-900 dark:text-white">{image.aiVersion || 'v2.3'}</p>
+                <p className="text-xs font-bold text-neutral-900 dark:text-white">{image.aiVersion || 'v1.0'}</p>
               </div>
             </div>
             
@@ -176,11 +258,17 @@ const Analizar = () => {
           {/* Actions */}
           {type === 'pending' && (
             <div className="grid grid-cols-3 gap-2">
-              <button className="flex items-center justify-center gap-1.5 py-2 rounded-lg bg-[#A8D32C]/10 hover:bg-[#C5E86C]/20 text-[#8ab824] font-bold text-xs transition-all duration-200 hover:shadow-md">
+              <button 
+                onClick={() => handleApprove(image)}
+                className="flex items-center justify-center gap-1.5 py-2 rounded-lg bg-[#A8D32C]/10 hover:bg-[#C5E86C]/20 text-[#8ab824] font-bold text-xs transition-all duration-200 hover:shadow-md"
+              >
                 <FaCheckCircle className="w-3.5 h-3.5" />
                 Aprobar
               </button>
-              <button className="flex items-center justify-center gap-1.5 py-2 rounded-lg bg-red-50 hover:bg-red-100 text-red-700 font-bold text-xs transition-all duration-200 hover:shadow-md">
+              <button 
+                onClick={() => setSelectedImage({ ...image, modalType: 'reject' })}
+                className="flex items-center justify-center gap-1.5 py-2 rounded-lg bg-red-50 hover:bg-red-100 text-red-700 font-bold text-xs transition-all duration-200 hover:shadow-md"
+              >
                 <FaTimes className="w-3.5 h-3.5" />
                 Rechazar
               </button>
@@ -661,7 +749,7 @@ const Analizar = () => {
                     </div>
                     <div>
                       <p className="text-[10px] text-neutral-500 dark:text-neutral-400 dark:text-neutral-500 font-semibold uppercase tracking-wide">Modelo IA</p>
-                      <p className="text-sm font-bold text-neutral-900 dark:text-white">{selectedImage.aiVersion || 'v2.3'}</p>
+                      <p className="text-sm font-bold text-neutral-900 dark:text-white">{selectedImage.aiVersion || 'v1.0'}</p>
                     </div>
                   </div>
                 </div>
@@ -809,6 +897,126 @@ const Analizar = () => {
                   </div>
                 )}
               </div>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Modal de Rechazo Profesional */}
+      {selectedImage?.modalType === 'reject' && createPortal(
+        <div 
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn z-[999999]"
+          onClick={() => {
+            setSelectedImage(null);
+            setRejectReason('');
+          }}
+        >
+          <div 
+            className="bg-white dark:bg-neutral-900 rounded-2xl max-w-lg w-full shadow-2xl animate-scaleIn"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="bg-gradient-to-r from-red-500 to-red-600 p-6 rounded-t-2xl">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                  <FaExclamationTriangle className="w-7 h-7 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                    Rechazar Imagen
+                  </h2>
+                  <p className="text-red-100 text-sm mt-1">
+                    Especifica el motivo del rechazo
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              {/* Imagen preview */}
+              <div className="mb-6">
+                <div className="relative h-40 rounded-xl overflow-hidden bg-neutral-100 dark:bg-neutral-800">
+                  <img 
+                    src={selectedImage.img}
+                    alt={selectedImage.disease}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                  <div className="absolute bottom-3 left-3 right-3">
+                    <p className="text-white font-bold text-sm">{selectedImage.disease}</p>
+                    <p className="text-white/80 text-xs">Confianza: {selectedImage.confidence}%</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Razones predefinidas */}
+              <div className="mb-5">
+                <label className="block text-sm font-bold text-neutral-900 dark:text-white mb-3">
+                  Motivo del Rechazo
+                </label>
+                <div className="grid grid-cols-2 gap-2 mb-3">
+                  {[
+                    'Imagen borrosa',
+                    'Mala iluminación',
+                    'Fuera de foco',
+                    'Ángulo inadecuado',
+                    'Calidad insuficiente',
+                    'Área incorrecta'
+                  ].map((reason) => (
+                    <button
+                      key={reason}
+                      onClick={() => setRejectReason(reason)}
+                      className={`px-3 py-2 rounded-lg text-xs font-semibold border-2 transition-all duration-200 ${
+                        rejectReason === reason
+                          ? 'bg-red-500 border-red-500 text-white'
+                          : 'bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 hover:border-red-300'
+                      }`}
+                    >
+                      {reason}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Motivo personalizado */}
+              <div className="mb-6">
+                <label className="block text-sm font-bold text-neutral-900 dark:text-white mb-2">
+                  O escribe un motivo personalizado
+                </label>
+                <textarea
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  placeholder="Describe el motivo del rechazo (opcional)..."
+                  className="w-full px-4 py-3 rounded-lg border-2 border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 text-neutral-900 dark:text-white placeholder-neutral-400 focus:border-red-400 focus:ring-2 focus:ring-red-400/20 outline-none transition-all resize-none"
+                  rows="3"
+                />
+              </div>
+
+              {/* Botones de acción */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setSelectedImage(null);
+                    setRejectReason('');
+                  }}
+                  className="flex-1 px-4 py-3 rounded-lg bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-300 font-bold transition-all duration-200"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => {
+                    handleReject(selectedImage, rejectReason || 'Sin especificar');
+                    setSelectedImage(null);
+                    setRejectReason('');
+                  }}
+                  className="flex-1 px-4 py-3 rounded-lg bg-red-500 hover:bg-red-600 text-white font-bold transition-all duration-200 hover:shadow-lg flex items-center justify-center gap-2"
+                >
+                  <FaTimes className="w-4 h-4" />
+                  Rechazar Imagen
+                </button>
               </div>
             </div>
           </div>

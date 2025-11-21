@@ -34,7 +34,7 @@ export const DISEASES_DATA = [
     riskFactors: ["Genética", "Alergias", "Asma", "Ambiente seco"],
     color: "#FAF0EA",
     icon: "🟤",
-    images: ["/images/eccema-1.jpg", "/images/eccema-2.jpg"],
+    images: ["/images/diseases/0.jpg", "/images/diseases/0.jpg"],
     specialty: "Dermatología General"
   },
   {
@@ -72,7 +72,7 @@ export const DISEASES_DATA = [
     riskFactors: ["Piel clara", "Quemaduras solares", "Muchos lunares", "Historia familiar"],
     color: "#0f172a",
     icon: "⚫",
-    images: ["/images/melanoma-1.jpg", "/images/melanoma-2.jpg"],
+    images: ["/images/diseases/1.jpg", "/images/diseases/1.jpg"],
     specialty: "Dermatología Oncológica",
     urgent: true,
     survivalRate: "98% si detectado temprano"
@@ -112,7 +112,7 @@ export const DISEASES_DATA = [
     riskFactors: ["Historia familiar", "Mutación filagrina", "Vivir en ciudad", "Clima frío"],
     color: "#E9CECE",
     icon: "🔴",
-    images: ["/images/atopica-1.jpg", "/images/atopica-2.jpg"],
+    images: ["/images/diseases/2.jpg", "/images/diseases/2.jpg"],
     specialty: "Dermatología Pediátrica"
   },
   {
@@ -150,7 +150,7 @@ export const DISEASES_DATA = [
     riskFactors: ["Edad avanzada", "Piel clara", "Exposición solar crónica", "Inmunosupresión"],
     color: "#A69AAD",
     icon: "🟣",
-    images: ["/images/bcc-1.jpg", "/images/bcc-2.jpg"],
+    images: ["/images/diseases/3.jpg", "/images/diseases/3.jpg"],
     specialty: "Dermatología Quirúrgica"
   },
   {
@@ -186,7 +186,7 @@ export const DISEASES_DATA = [
     riskFactors: ["Exposición solar", "Piel clara", "Número alto de lunares", "Historia familiar"],
     color: "#7380A1",
     icon: "🔵",
-    images: ["/images/nevus-1.jpg", "/images/nevus-2.jpg"],
+    images: ["/images/diseases/4.jpg", "/images/diseases/4.jpg"],
     specialty: "Dermatología de Lunares"
   },
   {
@@ -221,7 +221,7 @@ export const DISEASES_DATA = [
     riskFactors: ["Edad avanzada", "Exposición solar", "Genética"],
     color: "#C3D5E4",
     icon: "⚪",
-    images: ["/images/bkl-1.jpg", "/images/bkl-2.jpg"],
+    images: ["/images/diseases/5.jpg", "/images/diseases/5.jpg"],
     specialty: "Dermatología General"
   },
   {
@@ -259,7 +259,7 @@ export const DISEASES_DATA = [
     riskFactors: ["Genética", "Estrés", "Infecciones", "Obesidad", "Tabaquismo"],
     color: "#2D608F",
     icon: "🔵",
-    images: ["/images/psoriasis-1.jpg", "/images/psoriasis-2.jpg"],
+    images: ["/images/diseases/6.jpg", "/images/diseases/6.jpg"],
     specialty: "Dermatología y Reumatología"
   },
   {
@@ -294,7 +294,7 @@ export const DISEASES_DATA = [
     riskFactors: ["Edad", "Genética", "Exposición solar"],
     color: "#E9CECE",
     icon: "🟤",
-    images: ["/images/seborreica-1.jpg", "/images/seborreica-2.jpg"],
+    images: ["/images/diseases/7.jpg", "/images/diseases/7.jpg"],
     specialty: "Dermatología General"
   },
   {
@@ -331,7 +331,7 @@ export const DISEASES_DATA = [
     riskFactors: ["Clima húmedo", "Inmunosupresión", "Diabetes", "Obesidad", "Mala higiene"],
     color: "#A69AAD",
     icon: "🟢",
-    images: ["/images/fungica-1.jpg", "//images/fungica-2.jpg"],
+    images: ["/images/diseases/8.jpg", "/images/diseases/8.jpg"],
     specialty: "Dermatología y Micología"
   },
   {
@@ -368,7 +368,7 @@ export const DISEASES_DATA = [
     riskFactors: ["Contacto directo", "Inmunosupresión", "Edad pediátrica", "Actividad sexual"],
     color: "#7380A1",
     icon: "🟡",
-    images: ["/images/viral-1.jpg", "/images/viral-2.jpg"],
+    images: ["/images/diseases/9.jpg", "/images/diseases/9.jpg"],
     specialty: "Dermatología y Virología"
   }
 ];

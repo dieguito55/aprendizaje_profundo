@@ -7,18 +7,9 @@ import {
 
 const DiseaseDetail = ({ disease, onClose }) => {
     
-  const getDiseaseImage = (diseaseName) => {
-    const imageMap = {
-      'Eccema': 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=1600&h=900&fit=crop&q=90',
-      'Melanoma': 'https://images.unsplash.com/photo-1559757175-5700dde675bc?w=1600&h=900&fit=crop&q=90',
-      'Dermatitis Atópica': 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1600&h=900&fit=crop&q=90',
-      'Carcinoma Basocelular': 'https://images.unsplash.com/photo-1579154204601-01588f351e67?w=1600&h=900&fit=crop&q=90',
-      'Nevus Melanocítico': 'https://images.unsplash.com/photo-1582560475093-ba66accbc424?w=1600&h=900&fit=crop&q=90',
-      'Queratosis Benigna': 'https://images.unsplash.com/photo-1581594549595-35f6edc7b762?w=1600&h=900&fit=crop&q=90',
-      'Psoriasis': 'https://images.unsplash.com/photo-1579154204629-055a87ecfdd6?w=1600&h=900&fit=crop&q=90',
-      'Queratosis Seborreica': 'https://images.unsplash.com/photo-1631549916768-4119b2e5f926?w=1600&h=900&fit=crop&q=90'
-    };
-    return imageMap[diseaseName] || 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1600&h=900&fit=crop&q=90';
+  // Usar imagen basada en el ID de la enfermedad
+  const getDiseaseImage = (disease) => {
+    return `/images/diseases/${disease.id}.jpg`;
   };
 
   const getSeverityConfig = (severity) => {
@@ -55,7 +46,7 @@ const DiseaseDetail = ({ disease, onClose }) => {
       {/* Header con imagen - Compacto */}
       <div className="relative h-[140px] flex-shrink-0 overflow-hidden bg-neutral-900">
         <img 
-          src={getDiseaseImage(disease.name)}
+          src={getDiseaseImage(disease)}
           alt={disease.name}
           className="w-full h-full object-cover"
         />

@@ -284,7 +284,7 @@ const Layout = ({ children }) => {
               {/* Footer del Layout */}
               <div className="mt-6 sm:mt-8 text-center">
                 <p className="text-[11px] sm:text-sm text-[#A8D32C]/50 font-medium tracking-wide">
-                  DermApp Pro · Sistema de Diagnóstico con IA · v3.0
+                  DermApp Pro · Sistema de Diagnóstico con IA · v1.0
                 </p>
                 <div className="flex justify-center space-x-2 sm:space-x-3 mt-2 sm:mt-3">
                   {[1, 2, 3, 4, 5].map((dot) => (
